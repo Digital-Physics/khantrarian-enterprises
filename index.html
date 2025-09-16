@@ -1,0 +1,2117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', 'Arial', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* 3D Canvas Container */
+        #canvas-container {
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #000000 0%, #1a0066 30%, #660066 60%, #000000 100%);
+            cursor: grab;
+        }
+
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+
+        #three-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Overlay text on canvas */
+        .hero-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+ 
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ff0080, #00ff80, #0080ff, #ff8000);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: neonGlow 3s ease infinite;
+            text-shadow:
+                0 0 10px rgba(255, 0, 128, 0.8),
+                0 0 20px rgba(255, 0, 128, 0.6),
+                0 0 30px rgba(255, 0, 128, 0.4),
+                0 0 40px rgba(255, 0, 128, 0.2);
+            filter: drop-shadow(0 0 20px #ff0080);
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 3px;
+        }
+
+        @keyframes neonGlow {
+            0% { 
+                background-position: 0% 50%;
+                filter: drop-shadow(0 0 20px #ff0080) brightness(1);
+            }
+            25% { 
+                background-position: 100% 50%;
+                filter: drop-shadow(0 0 20px #00ff80) brightness(1.2);
+            }
+            50% { 
+                background-position: 100% 100%;
+                filter: drop-shadow(0 0 20px #0080ff) brightness(1);
+            }
+            75% { 
+                background-position: 0% 100%;
+                filter: drop-shadow(0 0 20px #ff8000) brightness(1.2);
+            }
+            100% { 
+                background-position: 0% 50%;
+                filter: drop-shadow(0 0 20px #ff0080) brightness(1);
+            }
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: #00ffff;
+            text-shadow: 
+                0 0 5px #00ffff,
+                0 0 10px #00ffff,
+                0 0 15px #00ffff;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 2px;
+            animation: cyan-pulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes cyan-pulse {
+            from { 
+                text-shadow: 
+                    0 0 5px #00ffff,
+                    0 0 10px #00ffff,
+                    0 0 15px #00ffff;
+            }
+            to { 
+                text-shadow: 
+                    0 0 10px #00ffff,
+                    0 0 20px #00ffff,
+                    0 0 30px #00ffff;
+            }
+        }
+
+        /* Main content */
+        .content {
+            padding: 80px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, #000000 0%, #1a0033 50%, #000000 100%);
+        }
+
+        .section {
+            margin-bottom: 100px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease;
+        }
+
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            background: linear-gradient(45deg, #ff0080, #00ff80);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(255, 0, 128, 0.5);
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(45deg, #ff0080, #00ff80);
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(255, 0, 128, 0.8);
+        }
+
+        /* Contact Info */
+        .contact-info {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #1a0033 0%, #330066 50%, #1a0033 100%);
+            border-radius: 20px;
+            border: 2px solid #ff0080;
+            box-shadow: 
+                0 0 20px rgba(255, 0, 128, 0.3),
+                inset 0 0 20px rgba(255, 0, 128, 0.1);
+        }
+
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .contact-links a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #ff0080, #00ff80);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            font-family: 'Orbitron', monospace;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 0 15px rgba(255, 0, 128, 0.5),
+                inset 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .contact-links a:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 8px 25px rgba(255, 0, 128, 0.6),
+                0 0 30px rgba(0, 255, 128, 0.4);
+            filter: brightness(1.2);
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .project-card {
+            background: linear-gradient(135deg, #1a0033 0%, #330066 50%, #1a0033 100%);
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            border: 2px solid #00ffff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 255, 0.3),
+                inset 0 0 20px rgba(0, 255, 255, 0.05);
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255, 0, 128, 0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .project-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 
+                0 20px 40px rgba(0, 255, 255, 0.4),
+                0 0 30px rgba(255, 0, 128, 0.3);
+            border-color: #ff0080;
+        }
+
+        .project-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #ff0080 0%, #00ff80 50%, #0080ff 100%);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            text-shadow: 
+                0 0 10px rgba(0, 0, 0, 0.8),
+                0 0 20px rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 0 20px rgba(255, 0, 128, 0.5),
+                inset 0 0 30px rgba(255, 255, 255, 0.1);
+        }
+
+        .project-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;  /* scale inside the box without distortion */
+            display: block;
+        }
+
+        .project-card:hover .project-image {
+            transform: scale(1.05);
+            box-shadow: 
+                0 0 30px rgba(255, 0, 128, 0.8),
+                inset 0 0 40px rgba(255, 255, 255, 0.2);
+        }
+
+        .project-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ff0080;
+            font-family: 'Orbitron', monospace;
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+
+        .project-year {
+            color: #00ff80;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-family: 'Orbitron', monospace;
+            text-shadow: 0 0 10px rgba(0, 255, 128, 0.5);
+        }
+
+        .project-description {
+            line-height: 1.6;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 20px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .project-tech {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .project-links {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .project-links a {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(45deg, #ff0080, #00ffff);
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            font-family: 'Orbitron', monospace;
+            transition: all 0.3s ease;
+            text-align: center;
+            box-shadow: 
+                0 0 15px rgba(255, 0, 128, 0.5),
+                inset 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .project-links a:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 5px 20px rgba(255, 0, 128, 0.6),
+                0 0 25px rgba(0, 255, 255, 0.4);
+            filter: brightness(1.3);
+        }
+
+        .tech-tag {
+            background: linear-gradient(45deg, #0080ff, #ff0080);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            font-family: 'Orbitron', monospace;
+            box-shadow: 
+                0 0 10px rgba(0, 128, 255, 0.5),
+                inset 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            color: #00ffff;
+            text-align: center;
+            pointer-events: none;
+            font-family: 'Orbitron', monospace;
+            text-shadow: 
+                0 0 5px #00ffff,
+                0 0 10px #00ffff;
+        }
+
+        .scroll-arrow {
+            font-size: 2rem;
+            animation: retro-bounce 2s infinite;
+            color: #ff0080;
+            text-shadow: 
+                0 0 10px #ff0080,
+                0 0 20px #ff0080;
+        }
+
+        @keyframes retro-bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        /* Interaction hint */
+        .interaction-hint {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, rgba(255, 0, 128, 0.2), rgba(0, 255, 255, 0.2));
+            color: #00ffff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-family: 'Orbitron', monospace;
+            z-index: 10;
+            pointer-events: none;
+            border: 1px solid #00ffff;
+            box-shadow: 
+                0 0 15px rgba(0, 255, 255, 0.5),
+                inset 0 0 15px rgba(255, 255, 255, 0.1);
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.5rem; }
+            .hero-subtitle { font-size: 1.2rem; }
+            .projects-grid { grid-template-columns: 1fr; }
+            .content { padding: 40px 15px; }
+            .contact-links { flex-direction: column; align-items: center; }
+            .interaction-hint { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <canvas id="three-canvas"></canvas>
+        <div class="hero-overlay">
+            <h1 class="hero-title">KHANTRARIAN ENTERPRISES</h1>
+            <p class="hero-subtitle">(aka Jon Khanlian's Portfolio)</p>
+            <p class="hero-subtitle">Machine Learning, Creative, Math, Finance, Film</p>
+        </div>
+        <div class="interaction-hint">
+            Drag to rotate • Scroll to explore
+        </div>
+        <div class="scroll-indicator">
+            <div>Scroll to explore</div>
+            <div class="scroll-arrow">↓</div>
+        </div>
+    </div>
+
+    <div class="content">
+        <section class="section">
+            <h2 class="section-title">Featured Projects</h2>
+
+            <div class="projects-grid">
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/pymeister_screenshot.png" alt="Pymeister Screenshot">
+                    </div>
+                    <h3 class="project-title">Pymeister</h3>
+                    <p class="project-description">
+                        A broser-based Python runner with coding examples and an interactive learning environment. 
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">Web Development</span>
+                        <span class="tech-tag">Education</span>
+                        <span class="tech-tag">Interactive Learning</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://www.pymeister.com" target="_blank">Visit Site</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/scriptmonger_screenshot.png" alt="Scriptmonger Screenshot">
+                    </div>
+                    <h3 class="project-title">Scriptmonger</h3>
+                    <p class="project-description">
+                        A FREE screenwriting software providing professional-grade tools for writers. 
+                        Features industry-standard formatting, AI integration through .json mode, cork boarding, and export capabilities for film and television scripts.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Web Application</span>
+                        <span class="tech-tag">Screenwriting</span>
+                        <span class="tech-tag">Creative Tools</span>
+                        <span class="tech-tag">Collaboration</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://scriptmonger.org" target="_blank">Visit Site</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/nets-vs-automata_screenshot.png" alt="Nets vs Automata Screenshot">
+                    </div>
+                    <h3 class="project-title">Nets vs. Automata</h3>
+                    <p class="project-description">
+                        A distributed, foundational machine learning research project exploring the relationship between statistical neural networks learning and deterministic cellular automata systems. 
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">HTML</span>
+                        <span class="tech-tag">JavaScript</span>
+                        <span class="tech-tag">TensorFlow.js</span>
+                        <span class="tech-tag">FastAPI</span>
+                        <span class="tech-tag">MySQL</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://nets-vs-automata.net" target="_blank">Visit Site</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/khatchig-bot_screenshot.png" alt="Khatchig Bot Screenshot">
+                    </div>
+                    <h3 class="project-title">Khatchig-Bot</h3>
+                    <p class="project-description">
+                        A persona-infused chatbot with a biologically-inspired user interface. 
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">HTML</span>
+                        <span class="tech-tag">JavaScript</span>
+                        <span class="tech-tag">FastAPI</span>
+                        <span class="tech-tag">PyTorch</span>
+                        <span class="tech-tag">WebSocket</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://khatchig-bot.onrender.com" target="_blank">Visit Site</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/gpteopardy_screenshot.png" alt="GPTeopardy Screenshot">
+                    </div>
+                    <h3 class="project-title">GPTeopardy</h3>
+                    <p class="project-description">
+                        A daily, natural language game testing knowledge and word recall. 
+                        Features automated question generation, scoring systems, and daily challenges with MySQL database and cron job automation.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">HTML</span>
+                        <span class="tech-tag">JavaScript</span>
+                        <span class="tech-tag">FastAPI</span>
+                        <span class="tech-tag">NLP API</span>
+                        <span class="tech-tag">MySQL</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://www.gpteopardy.com/" target="_blank">Visit Site</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/digital_physics_poster.png" alt="Digital Physics Film Poster">
+                    </div>
+                    <h3 class="project-title">Digital Physics (Film)</h3>
+                    <p class="project-description">
+                        A feature film exploring information, computation, complexity, and compression. 
+                        An ambitious cinematic work that bridges the gap between abstract computational concepts and human storytelling.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Film Production</span>
+                        <span class="tech-tag">Web Platform</span>
+                        <span class="tech-tag">Digital Media</span>
+                        <span class="tech-tag">Storytelling</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://digitalphysicsmovie.onrender.com/" target="_blank">Visit Site</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/digital_physics_game.png" alt="Digital Physics Game Screenshot">
+                    </div>
+                    <h3 class="project-title">Digital Physics (Game)</h3>
+                    <p class="project-description">
+                        A recursive, three-level, Super Mario-style puzzle game mixing pixel art and film media. 
+                        Built with Python, PyGame, PyTorch, Pygbag (WebAssembly) distributed to itch.io.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">PyGame</span>
+                        <span class="tech-tag">PyTorch</span>
+                        <span class="tech-tag">WebAssembly</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://digital-physics.itch.io/digital-physics" target="_blank">Play Game</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/path_time_scroll.GIF" alt="Scrolling Train Times GIF">
+                    </div>
+                    <h3 class="project-title">Scrolling Train Times</h3>
+                    <p class="project-description">
+                        A hardware project combining Raspberry Pi, an LED matrix, SSH connectivity, Python, scraped website data, and Path Train times...
+                        with Animation and Music.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Raspberry Pi</span>
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">LED Matrix</span>
+                        <span class="tech-tag">Data Scraping</span>
+                        <span class="tech-tag">SSH</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/Digital-Physics/raspberry-pi-PATH-train-LED-display" target="_blank">View Code</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/turing_machine_screenshot.png" alt="Sqrt(2) Turing Machine Screenshot">
+                    </div>
+                    <h3 class="project-title">sqrt(2) Turing Machine</h3>
+                    <p class="project-description">
+                        An interactive Turing Machine implementation that computes square root of 2. 
+                        Showcases a step-by-step simulation on E and F cells, like Turing used in his 1936 paper.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Automata Theory</span>
+                        <span class="tech-tag">Turing Machine</span>
+                        <span class="tech-tag">Web Simulation</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://turing-machine-sqrt.onrender.com/" target="_blank">Visit Site</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/particle_affinity_screenshot.png" alt="Particle Affinity Screenshot">
+                    </div>
+                    <h3 class="project-title">Particle Affinity (Rust, WASM, WebGPU)</h3>
+                    <p class="project-description">
+                        A physics-based particle simulation written in Rust and compiled to WebAssembly with WebGPU rendering. 
+                        Explores emergent behavior and affinity dynamics.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Rust</span>
+                        <span class="tech-tag">WebAssembly</span>
+                        <span class="tech-tag">WebGPU</span>
+                        <span class="tech-tag">Simulation</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://particle-affinity-rust-wasm-webgpu.onrender.com/" target="_blank">Visit Site</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/proxy_model_screenshot.png" alt="Proxy Model Screenshot">
+                    </div>
+                    <h3 class="project-title">Proxy Model</h3>
+                    <p class="project-description">
+                        A Machine Learning Proxy Model demonstrating approximating a computationally expensive stochastic option valuation process. 
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">Modeling</span>
+                        <span class="tech-tag">Stochastic Methods</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/Digital-Physics/stochastic_shortcut" target="_blank">View Code</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/rl_writing_sample.png" alt="Reinforcement Learning Article Screenshot">
+                    </div>
+                    <h3 class="project-title">Reinforcement Learning Article (The Actuary)</h3>
+                    <p class="project-description">
+                        An introductory article published in <em>The Actuary</em> magazine outlining the actuarial relationshipt between reinforcement learning rewards and discounted cash flows.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Reinforcement Learning</span>
+                        <span class="tech-tag">Education</span>
+                        <span class="tech-tag">Publishing</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://www.theactuary.com/features/2021/08/20/environment-agents-introduction-reinforcement-learning" target="_blank">Read Article</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/simple_rules.png" alt="Simple Rules Screenshot">
+                    </div>
+                    <h3 class="project-title">Simple Rules Presentation</h3>
+                    <p class="project-description">
+                        A Recurse Center Presentation on "Simple Rules". 
+                        Directed Computation, Emergent Comlexity, and Predictability.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">JavaScript</span>
+                        <span class="tech-tag">Presentation</span>
+                        <span class="tech-tag">Complex Systems</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://simple-rules-presentation.onrender.com/" target="_blank">View Presentation</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/fellow_screenshot.png" alt="Fellow of the Society of Actuaries Screenshot">
+                    </div>
+                    <h3 class="project-title">Fellow of the Society of Actuaries</h3>
+                    <p class="project-description">
+                        MCP precurser: Actuarial function calling with ChatGPT. 
+                        Features argument extraction and computed result injection within natural language.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Actuarial Science</span>
+                        <span class="tech-tag">AI</span>
+                        <span class="tech-tag">Function Calling</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://www.soa.org/493540/globalassets/assets/files/edu/edu-new-fellows-archive.pdf target="_blank">View Code</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/mcp_synth_screenshot.png" alt="MCP Synth Server Screenshot">
+                    </div>
+                    <h3 class="project-title">MCP Synth Server</h3>
+                    <p class="project-description">
+                        A Model Context Protocol (MCP) server for generating synth music. 
+                        Leverages structured prompts and sound samples to generate music to accompany text responses.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">MCP</span>
+                        <span class="tech-tag">Music</span>
+                        <span class="tech-tag">Generative AI</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/Digital-Physics/mcp-server-synth" target="_blank">View Code</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/terminal_spaceinvaders_screenshot.png" alt="Terminal Space Invaders Screenshot">
+                    </div>
+                    <h3 class="project-title">Terminal Space Invaders</h3>
+                    <p class="project-description">
+                        A classic Space Invaders clone playable in the terminal. 
+                        Implemented in Python, combining retro arcade style with modern code simplicity.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">Terminal Game</span>
+                        <span class="tech-tag">Retro</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/Digital-Physics/terminal-space-invaders" target="_blank">View Code</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/rl_research_screenshot.png" alt="Reinforcement Learning Screenshot">
+                    </div>
+                    <h3 class="project-title">Reinforcement Learning</h3>
+                    <p class="project-description">
+                        A reinforcement learning project to analyze agents taking actions in a complex and dynamic cellular automata environments.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Reinforcement Learning</span>
+                        <span class="tech-tag">Machine Learning</span>
+                        <span class="tech-tag">Visualization</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://www.nets-vs-automata.net/rl.html" target="_blank">Visit Site</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/path_to_the_cup_screenshot.png" alt="Path to the Cup Screenshot">
+                    </div>
+                    <h3 class="project-title">Path to the Cup</h3>
+                    <p class="project-description">
+                       A fan blog following the New York Red Bulls' journey through the MLS season, with a special focus on the PATH train experience for fans traveling to matches.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Storytelling</span>
+                        <span class="tech-tag">Media</span>
+                        <span class="tech-tag">Web Design</span>
+                        <span class="tech-tag">Visual Narrative</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://www.pathtothecup.com" target="_blank">Visit Site</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-image">
+                        <img src="img/philadelphia_philms_screenshot.png" alt="Philadelphia Films Screenshot">
+                    </div>
+                    <h3 class="project-title">Philadelphia Philms</h3>
+                    <p class="project-description">
+                        A film, animation, and post proudction company started in Philadelphia, now based in Jersey City.  
+                        Highlights include music videos, short films, and one feature film production.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Film</span>
+                        <span class="tech-tag">Video</span>
+                        <span class="tech-tag">Entertainment</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://www.philadelphiaphilms.com" target="_blank">Visit Site</a>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+        <!-- Contact Section -->
+        <section class="section">
+            <h2 class="section-title">Contact & Links</h2>
+            <div class="contact-info">
+                <p style="font-size: 1.2rem; margin-bottom: 20px; font-family: 'Orbitron', monospace; color: #00ffff; text-shadow: 0 0 10px rgba(0,255,255,0.5);">Let's connect and collaborate!</p>
+                <div class="contact-links">
+                    <a href="mailto:jdkhanlian@gmail.com">
+                        📧 jdkhanlian@gmail.com
+                    </a>
+                    <a href="https://github.com/Digital-Physics" target="_blank">
+                        🔗 GitHub: Digital-Physics
+                    </a>
+                    <a href="https://www.linkedin.com/in/philadelphiaphilms" target="_blank">
+                        🤝🏻 LinkedIn: Digital-Physics
+                    </a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Three.js 3D Cellular Automata on Sphere
+        let scene, camera, renderer, sphere, animationId;
+        const sphereRadius = 8;
+        const gridSize = 24; // Simplified grid size
+        let sphereCells = [];
+        let cellMeshes = [];
+        let generation = 0;
+        let frameCount = 0;
+
+        // Mouse interaction variables
+        let mouseX = 0, mouseY = 0;
+        let targetRotationX = 0, targetRotationY = 0;
+        let currentRotationX = 0, currentRotationY = 0;
+        let isMouseDown = false;
+        let sphereGroup;
+
+        let continentSphere;
+
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            const canvas = document.getElementById('three-canvas');
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000428, 0.8);
+
+            // Create sphere group for rotation
+            sphereGroup = new THREE.Group();
+            scene.add(sphereGroup);
+
+            // Initialize cellular automata on sphere
+            initSphericalAutomata();
+            
+            // Camera position
+            camera.position.set(0, 0, 20);
+            camera.lookAt(0, 0, 0);
+
+            // Enhanced lighting for retro effect
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+            
+            const directionalLight1 = new THREE.DirectionalLight(0xff0080, 1.2);
+            directionalLight1.position.set(10, 10, 5);
+            scene.add(directionalLight1);
+            
+            const directionalLight2 = new THREE.DirectionalLight(0x00ff80, 1.0);
+            directionalLight2.position.set(-10, -10, 5);
+            scene.add(directionalLight2);
+
+            const directionalLight3 = new THREE.DirectionalLight(0x0080ff, 0.8);
+            directionalLight3.position.set(0, 10, -10);
+            scene.add(directionalLight3);
+
+            createStarfield();
+            setupMouseControls();
+
+            // Create continent outline sphere (new layer)
+            const continentTexture = createContinentTexture();
+            const continentGeometry = new THREE.SphereGeometry(sphereRadius - 0.1, 64, 64);
+            const continentMaterial = new THREE.MeshBasicMaterial({
+                map: continentTexture,
+                transparent: true,
+                opacity: 0.8,
+                side: THREE.DoubleSide
+            });
+            continentSphere = new THREE.Mesh(continentGeometry, continentMaterial);
+            sphereGroup.add(continentSphere);
+
+            // Create wireframe sphere as base - more visible
+            const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 32, 32);
+            const sphereMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+            const wireframeSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphereGroup.add(wireframeSphere);
+
+            animate();
+        }
+
+        // Starfield background
+        function createStarfield() {
+            const starCount = 2000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+
+            for (let i = 0; i < starCount; i++) {
+                const r = 150 + Math.random() * 300;
+                const theta = Math.random() * 2 * Math.PI;
+                const phi = Math.acos(2 * Math.random() - 1);
+
+                const x = r * Math.sin(phi) * Math.cos(theta);
+                const y = r * Math.sin(phi) * Math.sin(theta);
+                const z = r * Math.cos(phi);
+
+                positions.push(x, y, z);
+            }
+
+            geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+
+            const plusSignTexture = createPlusSignTexture();
+
+            const material = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 2,
+                opacity: 0.6,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                map: plusSignTexture
+            });
+
+            const stars = new THREE.Points(geometry, material);
+            scene.add(stars);
+        }
+
+        function createPlusSignTexture() {
+            const size = 32;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const context = canvas.getContext('2d');
+            context.fillStyle = 'white';
+            
+            context.fillRect(size * 0.4, size * 0.1, size * 0.2, size * 0.8);
+            context.fillRect(size * 0.1, size * 0.4, size * 0.8, size * 0.2);
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function setupMouseControls() {
+            const canvas = document.getElementById('three-canvas');
+            
+            // Mouse events
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+            canvas.addEventListener('mouseleave', onMouseUp);
+            
+            // Touch events
+            canvas.addEventListener('touchstart', onTouchStart);
+            canvas.addEventListener('touchmove', onTouchMove);
+            canvas.addEventListener('touchend', onTouchEnd);
+        }
+
+        function onMouseDown(event) {
+            isMouseDown = true;
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+
+        function onMouseMove(event) {
+            if (!isMouseDown) return;
+            
+            const deltaX = event.clientX - mouseX;
+            const deltaY = event.clientY - mouseY;
+            
+            targetRotationY += deltaX * 0.01;
+            targetRotationX += deltaY * 0.01;
+            
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+
+        function onMouseUp(event) {
+            isMouseDown = false;
+        }
+
+        // Touch events
+        function onTouchStart(event) {
+            event.preventDefault();
+            const touch = event.touches[0];
+            mouseX = touch.clientX;
+            mouseY = touch.clientY;
+            isMouseDown = true;
+        }
+
+        function onTouchMove(event) {
+            event.preventDefault();
+            if (!isMouseDown) return;
+            
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - mouseX;
+            const deltaY = touch.clientY - mouseY;
+            
+            targetRotationY += deltaX * 0.01;
+            targetRotationX += deltaY * 0.01;
+            
+            mouseX = touch.clientX;
+            mouseY = touch.clientY;
+        }
+
+        function onTouchEnd(event) {
+            event.preventDefault();
+            isMouseDown = false;
+        }
+
+
+// New Code to cobmbine
+// This is code that can be added to or modified as needed
+        function initSphericalAutomata() {
+            sphereCells = [];
+            cellMeshes = [];
+            
+            // Create a simplified grid on the sphere surface
+            for (let i = 0; i < gridSize; i++) {
+                sphereCells[i] = [];
+                for (let j = 0; j < gridSize; j++) {
+                    const phi = (i / (gridSize - 1)) * Math.PI; // 0 to PI
+                    const theta = (j / gridSize) * Math.PI * 2; // 0 to 2PI
+                    
+                    const x = sphereRadius * Math.sin(phi) * Math.cos(theta);
+                    const y = sphereRadius * Math.cos(phi);
+                    const z = sphereRadius * Math.sin(phi) * Math.sin(theta);
+                    
+                    const alive = Math.random() < 0.2;
+                    
+                    sphereCells[i][j] = {
+                        alive: alive,
+                        nextState: false,
+                        position: new THREE.Vector3(x, y, z),
+                        phi: phi,
+                        theta: theta
+                    };
+
+                    if (alive) {
+                        createSphereCell(i, j);
+                    }
+                }
+            }
+        }
+
+        // Starfield background
+        function createStarfield() {
+            const starCount = 2000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+
+            for (let i = 0; i < starCount; i++) {
+                const r = 150 + Math.random() * 300;
+                const theta = Math.random() * 2 * Math.PI;
+                const phi = Math.acos(2 * Math.random() - 1);
+
+                const x = r * Math.sin(phi) * Math.cos(theta);
+                const y = r * Math.sin(phi) * Math.sin(theta);
+                const z = r * Math.cos(phi);
+
+                positions.push(x, y, z);
+            }
+
+            geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+
+            const plusSignTexture = createPlusSignTexture();
+
+            const material = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 2,
+                opacity: 0.6,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                map: plusSignTexture
+            });
+
+            const stars = new THREE.Points(geometry, material);
+            scene.add(stars);
+        }
+
+        function createPlusSignTexture() {
+            const size = 32;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const context = canvas.getContext('2d');
+            context.fillStyle = 'white';
+            
+            context.fillRect(size * 0.4, size * 0.1, size * 0.2, size * 0.8);
+            context.fillRect(size * 0.1, size * 0.4, size * 0.8, size * 0.2);
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createSphereCell(i, j) {
+            const cell = sphereCells[i][j];
+            const geometry = new THREE.SphereGeometry(0.15, 8, 8);
+            
+            // const hue = ((i + j + generation * 0.1) % 360) / 360;
+            // const saturation = 0.8 + Math.sin(generation * 0.05) * 0.2;
+            // const lightness = 0.7 + Math.cos(generation * 0.03) * 0.2;
+            
+            // const retroColors = [0xff0080, 0x00ff80, 0x0080ff, 0xff8000, 0x00ffff, 0xff0040, 0x8000ff];
+            // const colorIndex = (i + j + Math.floor(generation * 0.1)) % retroColors.length;
+            // const color = retroColors[colorIndex];
+
+            // Calculate transition from green to orange based on generation
+            const progress = (Math.sin(generation * 0.02) + 1) / 2; // 0 to 1
+            const retroGreen = new THREE.Color(0x00ff80);
+            const retroOrange = new THREE.Color(0xff8000);
+            const color = retroGreen.clone().lerp(retroOrange, progress);
+
+            // const material = new THREE.MeshLambertMaterial({
+            //     color: new THREE.Color().setHSL(hue, saturation, lightness),
+            //     transparent: true,
+            //     opacity: 0.8
+            // });
+
+            const material = new THREE.MeshLambertMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.9,
+                emissive: new THREE.Color(color),
+                emissiveIntensity: 0.3
+            });
+
+            const cellMesh = new THREE.Mesh(geometry, material);
+            cellMesh.position.copy(cell.position);
+            
+            sphereGroup.add(cellMesh);
+            
+            if (!cellMeshes[i]) cellMeshes[i] = [];
+            cellMeshes[i][j] = cellMesh;
+        }
+
+        function removeSphereCell(i, j) {
+            if (cellMeshes[i] && cellMeshes[i][j]) {
+                sphereGroup.remove(cellMeshes[i][j]);
+                cellMeshes[i][j] = null;
+            }
+        }
+
+        function getNeighbors(i, j) {
+            let count = 0;
+            const offsets = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1]];
+            
+            for (const [di, dj] of offsets) {
+                let ni = (i + di + gridSize) % gridSize;
+                let nj = (j + dj + gridSize) % gridSize;
+                
+                // Handle pole wrapping for latitude
+                if (i + di < 0) {
+                    ni = Math.abs(i + di);
+                    nj = (j + gridSize / 2) % gridSize;
+                } else if (i + di >= gridSize) {
+                    ni = gridSize - (i + di - gridSize + 1);
+                    nj = (j + gridSize / 2) % gridSize;
+                }
+                
+                if (sphereCells[ni] && sphereCells[ni][nj] && sphereCells[ni][nj].alive) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        function updateSphericalAutomata() {
+            // Calculate next states
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const neighbors = getNeighbors(i, j);
+                    const cell = sphereCells[i][j];
+                    
+                    // Conway's Game of Life rules
+                    if (cell.alive) {
+                        cell.nextState = neighbors === 2 || neighbors === 3;
+                    } else {
+                        cell.nextState = neighbors === 3;
+                    }
+                    
+                    // Add some randomness for interesting patterns
+                    if (!cell.alive && Math.random() < 0.002) {
+                        cell.nextState = true;
+                    }
+                }
+            }
+
+            // Apply next states
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const cell = sphereCells[i][j];
+                    
+                    if (cell.alive && !cell.nextState) {
+                        removeSphereCell(i, j);
+                        cell.alive = false;
+                    } else if (!cell.alive && cell.nextState) {
+                        createSphereCell(i, j);
+                        cell.alive = true;
+                    } else if (cell.alive && cellMeshes[i] && cellMeshes[i][j]) {
+                        // Update existing cell colors
+                        // const hue = ((i + j + generation * 0.1) % 360) / 360;
+                        // const saturation = 0.8 + Math.sin(generation * 0.05) * 0.2;
+                        // const lightness = 0.7 + Math.cos(generation * 0.03) * 0.2;
+                        
+                        // cellMeshes[i][j].material.color.setHSL(hue, saturation, lightness);
+                        // const retroColors = [0xff0080, 0x00ff80, 0x0080ff, 0xff8000, 0x00ffff, 0xff0040, 0x8000ff];
+                        // const colorIndex = (i + j + Math.floor(generation * 0.1)) % retroColors.length;
+                        // const color = retroColors[colorIndex];
+
+                        // // cellMeshes[i][j].material.color.setHex(color);
+                        // // cellMeshes[i][j].material.emissive.setHex(color);
+
+                        // cellMeshes[i][j].material.color.setHex(color);
+                        // cellMeshes[i][j].material.emissive.setHex(color);
+                        // cellMeshes[i][j].material.emissiveIntensity = 0.3;
+
+                        // Update existing cell colors with same transition
+                        const progress = (Math.sin(generation * 0.02) + 1) / 2;
+                        const retroGreen = new THREE.Color(0x00ff80);
+                        const retroOrange = new THREE.Color(0xff8000);
+                        const color = retroGreen.clone().lerp(retroOrange, progress);
+
+                        cellMeshes[i][j].material.color.copy(color);
+                        cellMeshes[i][j].material.emissive.copy(color);
+                        cellMeshes[i][j].material.emissiveIntensity = 0.3;
+                                                
+                        // Subtle pulsing effect
+                        const scale = 1 + Math.sin(generation * 0.1 + i + j) * 0.2;
+                        cellMeshes[i][j].scale.setScalar(scale);
+                    }
+                }
+            }
+            
+            generation++;
+        }
+
+        // function createContinentTexture() {
+        //     const size = 512;
+        //     const canvas = document.createElement('canvas');
+        //     canvas.width = size;
+        //     canvas.height = size;
+        //     const ctx = canvas.getContext('2d');
+            
+        //     // Fill with transparent background
+        //     ctx.clearRect(0, 0, size, size);
+            
+        //     // Set continent outline style
+        //     ctx.strokeStyle = '#00ffff';
+        //     ctx.lineWidth = 2;
+        //     ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
+            
+        //     // Simplified continent outlines (approximate shapes)
+        //     // North America
+        //     ctx.beginPath();
+        //     ctx.moveTo(size * 0.15, size * 0.25);
+        //     ctx.lineTo(size * 0.25, size * 0.2);
+        //     ctx.lineTo(size * 0.35, size * 0.3);
+        //     ctx.lineTo(size * 0.3, size * 0.45);
+        //     ctx.lineTo(size * 0.2, size * 0.4);
+        //     ctx.closePath();
+        //     ctx.fill();
+        //     ctx.stroke();
+            
+        //     // South America
+        //     ctx.beginPath();
+        //     ctx.moveTo(size * 0.25, size * 0.55);
+        //     ctx.lineTo(size * 0.3, size * 0.5);
+        //     ctx.lineTo(size * 0.28, size * 0.75);
+        //     ctx.lineTo(size * 0.22, size * 0.7);
+        //     ctx.closePath();
+        //     ctx.fill();
+        //     ctx.stroke();
+            
+        //     // Europe
+        //     ctx.beginPath();
+        //     ctx.moveTo(size * 0.48, size * 0.25);
+        //     ctx.lineTo(size * 0.52, size * 0.22);
+        //     ctx.lineTo(size * 0.55, size * 0.28);
+        //     ctx.lineTo(size * 0.5, size * 0.32);
+        //     ctx.closePath();
+        //     ctx.fill();
+        //     ctx.stroke();
+            
+        //     // Africa
+        //     ctx.beginPath();
+        //     ctx.moveTo(size * 0.48, size * 0.35);
+        //     ctx.lineTo(size * 0.55, size * 0.32);
+        //     ctx.lineTo(size * 0.58, size * 0.65);
+        //     ctx.lineTo(size * 0.52, size * 0.68);
+        //     ctx.lineTo(size * 0.45, size * 0.55);
+        //     ctx.closePath();
+        //     ctx.fill();
+        //     ctx.stroke();
+            
+        //     // Asia
+        //     ctx.beginPath();
+        //     ctx.moveTo(size * 0.55, size * 0.2);
+        //     ctx.lineTo(size * 0.85, size * 0.15);
+        //     ctx.lineTo(size * 0.9, size * 0.4);
+        //     ctx.lineTo(size * 0.75, size * 0.45);
+        //     ctx.lineTo(size * 0.6, size * 0.35);
+        //     ctx.closePath();
+        //     ctx.fill();
+        //     ctx.stroke();
+            
+        //     // Australia
+        //     ctx.beginPath();
+        //     ctx.moveTo(size * 0.75, size * 0.65);
+        //     ctx.lineTo(size * 0.85, size * 0.62);
+        //     ctx.lineTo(size * 0.88, size * 0.72);
+        //     ctx.lineTo(size * 0.78, size * 0.75);
+        //     ctx.closePath();
+        //     ctx.fill();
+        //     ctx.stroke();
+            
+        //     return new THREE.CanvasTexture(canvas);
+        // }
+        // function createContinentTexture() {
+        //     const size = 512;
+        //     const canvas = document.createElement('canvas');
+        //     canvas.width = size;
+        //     canvas.height = size;
+        //     const ctx = canvas.getContext('2d');
+            
+        //     // Fill with transparent background
+        //     ctx.clearRect(0, 0, size, size);
+            
+        //     // Set continent outline style
+        //     ctx.strokeStyle = '#00ffff';
+        //     ctx.lineWidth = 2;
+        //     ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
+            
+        //     // Helper function to draw smooth curves
+        //     function drawContinentPath(points) {
+        //         ctx.beginPath();
+        //         ctx.moveTo(points[0].x * size, points[0].y * size);
+                
+        //         for (let i = 1; i < points.length - 1; i += 2) {
+        //             const cp = points[i];
+        //             const end = points[i + 1] || points[0];
+        //             ctx.quadraticCurveTo(cp.x * size, cp.y * size, end.x * size, end.y * size);
+        //         }
+                
+        //         ctx.closePath();
+        //         ctx.fill();
+        //         ctx.stroke();
+        //     }
+            
+        //     // North America - More detailed shape
+        //     const northAmerica = [
+        //         {x: 0.08, y: 0.25}, // Alaska start
+        //         {x: 0.12, y: 0.18}, // Alaska curve
+        //         {x: 0.18, y: 0.20}, // Western Canada
+        //         {x: 0.25, y: 0.15}, // Control point
+        //         {x: 0.32, y: 0.18}, // Hudson Bay area
+        //         {x: 0.35, y: 0.22}, // Control point
+        //         {x: 0.38, y: 0.28}, // Eastern Canada
+        //         {x: 0.36, y: 0.35}, // Control point
+        //         {x: 0.34, y: 0.42}, // US East Coast
+        //         {x: 0.32, y: 0.48}, // Florida
+        //         {x: 0.28, y: 0.45}, // Gulf Coast
+        //         {x: 0.22, y: 0.50}, // Mexico
+        //         {x: 0.18, y: 0.48}, // Control point
+        //         {x: 0.15, y: 0.45}, // West Coast
+        //         {x: 0.12, y: 0.38}, // Control point
+        //         {x: 0.10, y: 0.32}, // Pacific Northwest
+        //         {x: 0.08, y: 0.28}  // Back to Alaska
+        //     ];
+        //     drawContinentPath(northAmerica);
+            
+        //     // South America - More realistic shape
+        //     const southAmerica = [
+        //         {x: 0.28, y: 0.52}, // Northern coast
+        //         {x: 0.32, y: 0.50}, // Control point
+        //         {x: 0.36, y: 0.54}, // Venezuela/Guyana
+        //         {x: 0.38, y: 0.58}, // Control point
+        //         {x: 0.37, y: 0.65}, // Brazil bulge
+        //         {x: 0.35, y: 0.72}, // Control point
+        //         {x: 0.32, y: 0.78}, // Argentina
+        //         {x: 0.28, y: 0.82}, // Control point
+        //         {x: 0.24, y: 0.80}, // Chile
+        //         {x: 0.22, y: 0.75}, // Control point
+        //         {x: 0.23, y: 0.68}, // Peru
+        //         {x: 0.25, y: 0.62}, // Control point
+        //         {x: 0.26, y: 0.56}  // Colombia
+        //     ];
+        //     drawContinentPath(southAmerica);
+            
+        //     // Europe - More detailed
+        //     const europe = [
+        //         {x: 0.46, y: 0.22}, // Scandinavia
+        //         {x: 0.50, y: 0.18}, // Control point
+        //         {x: 0.54, y: 0.20}, // Northern Europe
+        //         {x: 0.56, y: 0.25}, // Control point
+        //         {x: 0.55, y: 0.30}, // Central Europe
+        //         {x: 0.52, y: 0.32}, // Control point
+        //         {x: 0.48, y: 0.30}, // Western Europe
+        //         {x: 0.46, y: 0.26}  // Back to start
+        //     ];
+        //     drawContinentPath(europe);
+            
+        //     // Africa - Much more realistic
+        //     const africa = [
+        //         {x: 0.48, y: 0.33}, // North Africa
+        //         {x: 0.52, y: 0.32}, // Control point
+        //         {x: 0.56, y: 0.35}, // Horn of Africa area
+        //         {x: 0.58, y: 0.42}, // Control point
+        //         {x: 0.59, y: 0.50}, // East Africa
+        //         {x: 0.58, y: 0.58}, // Control point
+        //         {x: 0.56, y: 0.65}, // Southern Africa
+        //         {x: 0.52, y: 0.68}, // Control point
+        //         {x: 0.48, y: 0.66}, // Southwest Africa
+        //         {x: 0.45, y: 0.62}, // Control point
+        //         {x: 0.44, y: 0.55}, // West Africa bulge
+        //         {x: 0.46, y: 0.48}, // Control point
+        //         {x: 0.47, y: 0.40}  // Northwest Africa
+        //     ];
+        //     drawContinentPath(africa);
+            
+        //     // Asia - More complex shape
+        //     const asia = [
+        //         {x: 0.56, y: 0.18}, // Siberia
+        //         {x: 0.65, y: 0.15}, // Control point
+        //         {x: 0.75, y: 0.18}, // Eastern Siberia
+        //         {x: 0.82, y: 0.22}, // Control point
+        //         {x: 0.88, y: 0.28}, // Far East
+        //         {x: 0.90, y: 0.35}, // Control point
+        //         {x: 0.87, y: 0.42}, // Southeast Asia
+        //         {x: 0.82, y: 0.45}, // Control point
+        //         {x: 0.75, y: 0.43}, // India/China
+        //         {x: 0.68, y: 0.40}, // Control point
+        //         {x: 0.62, y: 0.35}, // Central Asia
+        //         {x: 0.58, y: 0.28}, // Control point
+        //         {x: 0.56, y: 0.22}  // Back to start
+        //     ];
+        //     drawContinentPath(asia);
+            
+        //     // Australia - More realistic
+        //     const australia = [
+        //         {x: 0.75, y: 0.62}, // Northern coast
+        //         {x: 0.82, y: 0.60}, // Control point
+        //         {x: 0.88, y: 0.64}, // Eastern coast
+        //         {x: 0.90, y: 0.68}, // Control point
+        //         {x: 0.87, y: 0.72}, // Southeastern coast
+        //         {x: 0.82, y: 0.74}, // Control point
+        //         {x: 0.75, y: 0.72}, // Southern coast
+        //         {x: 0.70, y: 0.68}, // Control point
+        //         {x: 0.72, y: 0.64}  // Western coast
+        //     ];
+        //     drawContinentPath(australia);
+            
+        //     return new THREE.CanvasTexture(canvas);
+        // }
+
+        function createContinentTexture() {
+            const size = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Fill with transparent background
+            ctx.clearRect(0, 0, size, size);
+            
+            // Set continent outline style
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
+            
+            // Convert lat/lng to canvas coordinates
+            function coordToCanvas(lat, lng) {
+                const x = (lng + 180) / 360;
+                const y = (90 - lat) / 180;
+                return {
+                    x: x * size,
+                    y: y * size
+                };
+            }
+            
+            // Draw continent from coordinate array
+            function drawContinent(coords) {
+                if (coords.length < 3) return;
+                
+                ctx.beginPath();
+                const firstPoint = coordToCanvas(coords[0].lat, coords[0].lng);
+                ctx.moveTo(firstPoint.x, firstPoint.y);
+                
+                for (let i = 1; i < coords.length; i++) {
+                    const point = coordToCanvas(coords[i].lat, coords[i].lng);
+                    ctx.lineTo(point.x, point.y);
+                }
+                
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+            
+            // NORTH AMERICA - Detailed coastline
+            const northAmerica = [
+                // Alaska and Northern Canada
+                {lat: 71.0, lng: -156.0}, // Point Barrow, Alaska
+                {lat: 70.2, lng: -148.5},
+                {lat: 69.5, lng: -140.0},
+                {lat: 68.8, lng: -133.0},
+                {lat: 69.0, lng: -125.0}, // Mackenzie Delta
+                {lat: 69.5, lng: -120.0},
+                {lat: 70.0, lng: -115.0},
+                {lat: 69.8, lng: -108.0},
+                {lat: 69.2, lng: -105.0}, // Victoria Island area
+                {lat: 68.5, lng: -100.0},
+                {lat: 67.8, lng: -95.0},
+                {lat: 66.5, lng: -85.0}, // Hudson Bay entrance
+                
+                // Eastern Canada
+                {lat: 64.2, lng: -75.0}, // Baffin Island
+                {lat: 62.0, lng: -70.0},
+                {lat: 60.0, lng: -65.0}, // Labrador
+                {lat: 58.5, lng: -62.0},
+                {lat: 55.0, lng: -60.0}, // Newfoundland area
+                {lat: 51.0, lng: -55.0},
+                {lat: 47.5, lng: -52.5}, // Newfoundland
+                {lat: 46.0, lng: -60.0}, // Nova Scotia
+                {lat: 45.5, lng: -66.0}, // New Brunswick
+                {lat: 45.0, lng: -67.5}, // Maine
+                
+                // US East Coast
+                {lat: 44.0, lng: -69.0}, // Maine coast
+                {lat: 42.5, lng: -70.5}, // Boston area
+                {lat: 41.0, lng: -71.5}, // Rhode Island
+                {lat: 40.5, lng: -74.0}, // New York
+                {lat: 39.5, lng: -75.0}, // Philadelphia
+                {lat: 38.0, lng: -75.5}, // Chesapeake Bay
+                {lat: 36.0, lng: -75.8}, // North Carolina
+                {lat: 33.5, lng: -78.0}, // South Carolina
+                {lat: 32.0, lng: -81.0}, // Georgia
+                {lat: 30.0, lng: -81.5}, // Florida northeast
+                {lat: 28.0, lng: -80.5}, // Florida east
+                {lat: 25.5, lng: -80.0}, // Miami
+                {lat: 24.5, lng: -81.5}, // Florida Keys
+                {lat: 25.0, lng: -82.0}, // Florida southwest
+                {lat: 26.0, lng: -82.5}, // Tampa area
+                
+                // Gulf Coast
+                {lat: 28.0, lng: -84.0}, // Florida panhandle
+                {lat: 30.5, lng: -88.0}, // Alabama
+                {lat: 29.0, lng: -90.0}, // Louisiana
+                {lat: 29.5, lng: -94.0}, // Texas east
+                {lat: 28.5, lng: -96.0}, // Houston area
+                {lat: 27.5, lng: -97.5}, // Corpus Christi
+                {lat: 26.0, lng: -97.0}, // South Texas
+                
+                // Mexico
+                {lat: 25.8, lng: -97.5}, // Brownsville area
+                {lat: 24.0, lng: -98.0},
+                {lat: 22.0, lng: -98.5}, // Tampico area
+                {lat: 20.5, lng: -97.0}, // Veracruz
+                {lat: 18.0, lng: -94.0}, // Tabasco
+                {lat: 16.0, lng: -92.5}, // Chiapas
+                {lat: 14.5, lng: -92.0}, // Guatemala border
+                {lat: 16.0, lng: -95.0}, // Oaxaca
+                {lat: 18.0, lng: -103.0}, // Jalisco
+                {lat: 20.5, lng: -105.0}, // Puerto Vallarta
+                {lat: 23.0, lng: -109.5}, // Baja California Sur
+                {lat: 28.0, lng: -114.0}, // Baja California
+                {lat: 32.5, lng: -117.0}, // Tijuana
+                
+                // US West Coast
+                {lat: 32.7, lng: -117.2}, // San Diego
+                {lat: 34.0, lng: -118.5}, // Los Angeles
+                {lat: 36.0, lng: -121.5}, // Monterey
+                {lat: 37.8, lng: -122.4}, // San Francisco
+                {lat: 40.0, lng: -124.0}, // Northern California
+                {lat: 42.0, lng: -124.5}, // Oregon
+                {lat: 45.5, lng: -124.0}, // Oregon coast
+                {lat: 47.5, lng: -124.5}, // Washington
+                {lat: 48.5, lng: -125.0}, // Olympic Peninsula
+                {lat: 49.0, lng: -125.5}, // Vancouver Island area
+                
+                // Western Canada and Alaska
+                {lat: 51.0, lng: -128.0}, // British Columbia
+                {lat: 54.0, lng: -130.0},
+                {lat: 56.5, lng: -132.5}, // Southeast Alaska
+                {lat: 58.0, lng: -134.0}, // Juneau area
+                {lat: 59.5, lng: -139.0}, // Gulf of Alaska
+                {lat: 60.5, lng: -146.0}, // Prince William Sound
+                {lat: 61.0, lng: -150.0}, // Anchorage area
+                {lat: 60.5, lng: -151.0}, // Kenai Peninsula
+                {lat: 59.0, lng: -154.0}, // Alaska Peninsula start
+                {lat: 57.0, lng: -158.0}, // Alaska Peninsula
+                {lat: 55.0, lng: -162.0}, // Aleutians start
+                {lat: 60.0, lng: -165.0}, // Western Alaska
+                {lat: 65.0, lng: -167.0}, // Seward Peninsula
+                {lat: 68.0, lng: -166.0}, // North Alaska
+                {lat: 70.0, lng: -160.0}  // Back toward Point Barrow
+            ];
+            
+            // SOUTH AMERICA - Detailed coastline
+            const southAmerica = [
+                // Northern coast
+                {lat: 12.0, lng: -68.5}, // Venezuela
+                {lat: 11.5, lng: -66.0},
+                {lat: 10.5, lng: -64.0}, // Trinidad area
+                {lat: 8.5, lng: -60.0}, // Guyana
+                {lat: 6.0, lng: -57.5}, // Suriname
+                {lat: 4.0, lng: -54.0}, // French Guiana
+                {lat: 2.0, lng: -51.0}, // Brazil north
+                {lat: 0.5, lng: -49.0}, // Amazon mouth
+                {lat: -2.0, lng: -41.0}, // Brazil northeast
+                {lat: -5.0, lng: -35.0}, // Natal area
+                {lat: -8.0, lng: -35.0}, // Recife area
+                {lat: -12.0, lng: -37.0}, // Salvador area
+                {lat: -15.0, lng: -39.0},
+                {lat: -18.0, lng: -39.5}, // Vitória area
+                {lat: -22.0, lng: -42.0}, // Rio de Janeiro
+                {lat: -24.0, lng: -46.0}, // São Paulo area
+                {lat: -26.0, lng: -48.5}, // Santa Catarina
+                {lat: -30.0, lng: -50.0}, // Rio Grande do Sul
+                {lat: -34.0, lng: -53.0}, // Uruguay
+                {lat: -35.0, lng: -57.0}, // Argentina - Rio de la Plata
+                
+                // Argentina coast
+                {lat: -36.0, lng: -56.5}, // Buenos Aires area
+                {lat: -38.0, lng: -57.5}, // Mar del Plata area
+                {lat: -40.0, lng: -62.0}, // Patagonia
+                {lat: -42.0, lng: -63.5},
+                {lat: -45.0, lng: -66.0}, // Santa Cruz
+                {lat: -48.0, lng: -66.0},
+                {lat: -50.0, lng: -68.0},
+                {lat: -52.0, lng: -68.5}, // Strait of Magellan
+                {lat: -54.0, lng: -67.0}, // Tierra del Fuego
+                {lat: -55.0, lng: -67.0}, // Cape Horn area
+                
+                // Chile coast (going north)
+                {lat: -53.0, lng: -71.0}, // Southern Chile
+                {lat: -50.0, lng: -74.0},
+                {lat: -47.0, lng: -74.5}, // Chilean fjords
+                {lat: -44.0, lng: -73.5},
+                {lat: -40.0, lng: -73.0}, // Valdivia area
+                {lat: -36.0, lng: -72.5}, // Concepción area
+                {lat: -33.0, lng: -71.5}, // Santiago/Valparaíso
+                {lat: -30.0, lng: -71.0}, // La Serena area
+                {lat: -27.0, lng: -70.5}, // Atacama
+                {lat: -24.0, lng: -70.0}, // Antofagasta
+                {lat: -20.0, lng: -70.0}, // Iquique area
+                {lat: -18.0, lng: -70.5}, // Arica
+                
+                // Peru coast
+                {lat: -16.0, lng: -72.0}, // Southern Peru
+                {lat: -12.0, lng: -77.0}, // Lima
+                {lat: -8.0, lng: -79.0}, // Northern Peru
+                {lat: -4.0, lng: -81.0}, // Ecuador border
+                
+                // Ecuador coast
+                {lat: -2.0, lng: -80.5}, // Guayaquil
+                {lat: 1.0, lng: -79.5}, // Northern Ecuador
+                
+                // Colombia coast
+                {lat: 2.5, lng: -78.0}, // Southern Colombia
+                {lat: 4.0, lng: -77.0}, // Buenaventura area
+                {lat: 6.0, lng: -77.5}, // Medellín area
+                {lat: 8.0, lng: -76.0}, // Cartagena area
+                {lat: 10.0, lng: -75.0}, // Barranquilla
+                {lat: 11.0, lng: -72.0}, // Maracaibo area
+                {lat: 12.0, lng: -70.0}  // Back to Venezuela
+            ];
+            
+            // EUROPE - Detailed coastline
+            const europe = [
+                // Scandinavia
+                {lat: 71.0, lng: 25.8}, // North Cape, Norway
+                {lat: 70.5, lng: 23.0},
+                {lat: 69.0, lng: 18.0}, // Northern Norway
+                {lat: 68.0, lng: 15.0},
+                {lat: 67.0, lng: 12.0}, // Lofoten area
+                {lat: 65.0, lng: 10.0}, // Trondheim area
+                {lat: 62.0, lng: 5.0}, // Bergen area
+                {lat: 59.0, lng: 5.0}, // Stavanger
+                {lat: 58.0, lng: 7.0}, // Southern Norway
+                {lat: 57.5, lng: 10.0}, // Denmark north
+                {lat: 55.5, lng: 12.0}, // Copenhagen area
+                
+                // Baltic Sea region
+                {lat: 54.5, lng: 13.0}, // Germany north
+                {lat: 54.0, lng: 14.0}, // Poland coast
+                {lat: 55.0, lng: 17.0}, // Poland north
+                {lat: 56.0, lng: 21.0}, // Lithuania
+                {lat: 57.5, lng: 24.0}, // Latvia
+                {lat: 59.0, lng: 26.0}, // Estonia
+                {lat: 60.0, lng: 28.0}, // Finland south
+                {lat: 65.0, lng: 25.0}, // Finland north
+                {lat: 69.0, lng: 30.0}, // Finland-Russia border
+                
+                // Russia (European part)
+                {lat: 68.0, lng: 33.0}, // Murmansk area
+                {lat: 66.0, lng: 40.0}, // White Sea
+                {lat: 64.0, lng: 45.0}, // Arkhangelsk area
+                {lat: 60.0, lng: 50.0}, // Perm area
+                {lat: 55.0, lng: 48.0}, // Kazan area
+                {lat: 50.0, lng: 40.0}, // Voronezh area
+                {lat: 47.0, lng: 39.0}, // Rostov area
+                {lat: 45.0, lng: 37.0}, // Krasnodar
+                
+                // Black Sea
+                {lat: 44.0, lng: 34.0}, // Crimea
+                {lat: 43.0, lng: 28.0}, // Bulgaria
+                {lat: 42.0, lng: 28.0}, // Turkey north
+                {lat: 41.0, lng: 29.0}, // Istanbul area
+                {lat: 40.0, lng: 26.0}, // Western Turkey
+                {lat: 39.0, lng: 23.0}, // Northern Greece
+                {lat: 38.0, lng: 21.0}, // Western Greece
+                {lat: 37.0, lng: 22.0}, // Peloponnese
+                {lat: 35.0, lng: 25.0}, // Crete
+                {lat: 37.0, lng: 15.0}, // Sicily
+                
+                // Italy
+                {lat: 38.0, lng: 16.0}, // Calabria
+                {lat: 40.0, lng: 18.0}, // Puglia
+                {lat: 42.0, lng: 17.0}, // Adriatic coast
+                {lat: 45.5, lng: 13.0}, // Venice area
+                {lat: 44.0, lng: 8.0}, // Genoa area
+                {lat: 43.0, lng: 7.0}, // French Riviera
+                
+                // France
+                {lat: 43.5, lng: 3.0}, // Montpellier area
+                {lat: 44.0, lng: -1.0}, // Bordeaux area
+                {lat: 46.0, lng: -2.0}, // Western France
+                {lat: 48.5, lng: -4.0}, // Brittany
+                {lat: 50.0, lng: 1.5}, // English Channel
+                
+                // Britain
+                {lat: 51.0, lng: 1.0}, // Dover area
+                {lat: 52.0, lng: 1.5}, // East England
+                {lat: 55.0, lng: 0.0}, // Northeast England
+                {lat: 58.5, lng: -3.0}, // Scotland
+                {lat: 59.0, lng: -6.0}, // Scotland west
+                {lat: 57.0, lng: -7.0}, // Scotland islands
+                {lat: 55.0, lng: -5.0}, // Western Scotland
+                {lat: 52.0, lng: -5.0}, // Wales
+                {lat: 50.0, lng: -5.0}, // Southwest England
+                {lat: 49.0, lng: -2.0}, // English Channel islands
+                
+                // Back to Iberia
+                {lat: 44.0, lng: -2.0}, // Northern Spain
+                {lat: 43.5, lng: -8.0}, // Galicia
+                {lat: 42.0, lng: -9.0}, // Portugal north
+                {lat: 39.0, lng: -9.5}, // Lisbon area
+                {lat: 37.0, lng: -9.0}, // Southern Portugal
+                {lat: 36.0, lng: -6.0}, // Southern Spain
+                {lat: 36.0, lng: -2.5}, // Almería area
+                {lat: 37.0, lng: 0.0}, // Valencia area
+                {lat: 41.0, lng: 3.0}, // Barcelona area
+                {lat: 43.0, lng: 2.0}, // French border
+                {lat: 45.0, lng: 6.0}, // Alps area
+                {lat: 47.0, lng: 8.0}, // Switzerland area
+                {lat: 48.0, lng: 11.0}, // Munich area
+                {lat: 50.0, lng: 14.0}, // Prague area
+                {lat: 52.0, lng: 20.0}, // Warsaw area
+                {lat: 54.0, lng: 18.0}, // Gdansk area
+                {lat: 56.0, lng: 13.0}, // Southern Sweden
+                {lat: 59.0, lng: 11.0}, // Oslo area
+                {lat: 62.0, lng: 6.0}, // Western Norway
+                {lat: 65.0, lng: 12.0}, // Central Norway
+                {lat: 68.0, lng: 16.0}, // Northern Norway
+                {lat: 70.0, lng: 20.0}, // Far north
+                {lat: 71.0, lng: 25.0}  // Back to North Cape
+            ];
+            
+            // AFRICA - Detailed coastline
+            const africa = [
+                // North Africa - Mediterranean
+                {lat: 37.0, lng: -6.0}, // Morocco - Strait of Gibraltar
+                {lat: 36.0, lng: -5.5}, // Spanish Morocco area
+                {lat: 35.5, lng: -2.0}, // Morocco Mediterranean
+                {lat: 37.0, lng: 3.0}, // Algeria
+                {lat: 37.0, lng: 8.0}, // Tunisia
+                {lat: 34.0, lng: 11.0}, // Tunisia south
+                {lat: 33.0, lng: 13.0}, // Libya west
+                {lat: 32.5, lng: 20.0}, // Libya central
+                {lat: 32.0, lng: 25.0}, // Libya east
+                {lat: 31.0, lng: 32.0}, // Egypt - Alexandria
+                {lat: 30.0, lng: 33.0}, // Nile Delta
+                
+                // Red Sea coast
+                {lat: 27.0, lng: 34.0}, // Egypt Red Sea
+                {lat: 24.0, lng: 37.0}, // Sudan Red Sea
+                {lat: 20.0, lng: 37.5}, // Sudan central Red Sea
+                {lat: 16.0, lng: 39.0}, // Sudan south Red Sea
+                {lat: 13.0, lng: 43.0}, // Eritrea
+                {lat: 11.5, lng: 43.0}, // Djibouti
+                {lat: 10.0, lng: 45.0}, // Somalia north
+                {lat: 5.0, lng: 48.0}, // Somalia central
+                {lat: 2.0, lng: 45.0}, // Somalia south
+                {lat: -1.0, lng: 41.0}, // Kenya
+                {lat: -4.0, lng: 40.0}, // Tanzania north
+                {lat: -8.0, lng: 39.0}, // Tanzania central
+                {lat: -10.0, lng: 40.0}, // Tanzania south
+                
+                // East Africa
+                {lat: -12.0, lng: 35.0}, // Mozambique north
+                {lat: -16.0, lng: 37.0}, // Mozambique central
+                {lat: -20.0, lng: 35.0}, // Mozambique south
+                {lat: -23.0, lng: 35.0}, // South Africa northeast
+                {lat: -26.0, lng: 33.0}, // Durban area
+                {lat: -29.0, lng: 31.0}, // South Africa east
+                {lat: -31.0, lng: 30.0}, // Port Elizabeth area
+                {lat: -34.0, lng: 25.0}, // Cape area east
+                {lat: -34.5, lng: 20.0}, // Cape Town area
+                {lat: -33.0, lng: 18.0}, // Cape of Good Hope
+                
+                // West coast
+                {lat: -29.0, lng: 17.0}, // Namibia south
+                {lat: -25.0, lng: 15.0}, // Namibia central
+                {lat: -20.0, lng: 13.0}, // Namibia north
+                {lat: -17.0, lng: 12.0}, // Angola south
+                {lat: -12.0, lng: 13.0}, // Angola central
+                {lat: -8.0, lng: 13.0}, // Angola north
+                {lat: -5.0, lng: 12.0}, // Congo
+                {lat: -1.0, lng: 9.0}, // Gabon
+                {lat: 1.0, lng: 9.0}, // Equatorial Guinea
+                {lat: 3.0, lng: 8.0}, // Cameroon
+                {lat: 5.0, lng: 5.0}, // Nigeria south
+                {lat: 6.0, lng: 3.0}, // Lagos area
+                {lat: 6.0, lng: 1.0}, // Benin
+                {lat: 6.0, lng: -1.0}, // Ghana
+                {lat: 5.0, lng: -3.0}, // Côte d'Ivoire
+                {lat: 6.0, lng: -8.0}, // Liberia
+                {lat: 8.0, lng: -12.0}, // Sierra Leone
+                {lat: 9.0, lng: -14.0}, // Guinea
+                {lat: 11.0, lng: -17.0}, // Guinea-Bissau
+                {lat: 13.0, lng: -17.0}, // Senegal south
+                {lat: 16.0, lng: -16.0}, // Senegal north
+                {lat: 21.0, lng: -17.0}, // Western Sahara
+                {lat: 28.0, lng: -12.0}, // Morocco Atlantic south
+                {lat: 32.0, lng: -9.0}, // Morocco Atlantic central
+                {lat: 34.0, lng: -7.0}, // Morocco Atlantic north
+                {lat: 36.0, lng: -6.0}  // Back to Gibraltar
+            ];
+            
+            // ASIA - Detailed coastline (focusing on key features)
+            const asia = [
+                // Northern Siberia
+                {lat: 77.0, lng: 104.0}, // Severnaya Zemlya
+                {lat: 76.0, lng: 110.0},
+                {lat: 75.0, lng: 125.0}, // New Siberian Islands
+                {lat: 73.0, lng: 140.0},
+                {lat: 71.0, lng: 155.0}, // Chukotka
+                {lat: 66.0, lng: 170.0}, // Bering Strait
+                {lat: 60.0, lng: 166.0}, // Kamchatka north
+                {lat: 53.0, lng: 160.0}, // Kamchatka south
+                {lat: 46.0, lng: 142.0}, // Sakhalin
+                {lat: 43.0, lng: 132.0}, // Vladivostok area
+                
+                // East Asia
+                {lat: 40.0, lng: 124.0}, // North Korea
+                {lat: 37.5, lng: 125.0}, // South Korea
+                {lat: 35.0, lng: 130.0}, // Japan area (simplified)
+                {lat: 31.0, lng: 121.0}, // Shanghai area
+                {lat: 26.0, lng: 120.0}, // East China Sea
+                {lat: 22.0, lng: 114.0}, // Hong Kong area
+                {lat: 18.0, lng: 109.0}, // Hainan
+                {lat: 10.0, lng: 107.0}, // Vietnam
+                {lat: 1.0, lng: 104.0}, // Singapore area
+                
+                // Southeast Asia
+                {lat: -8.0, lng: 115.0}, // Indonesia (Bali area)
+                {lat: -6.0, lng: 107.0}, // Java
+                {lat: 0.0, lng: 100.0}, // Sumatra
+                {lat: 5.0, lng: 95.0}, // Northern Sumatra
+                {lat: 8.0, lng: 98.0}, // Thailand south
+                {lat: 14.0, lng: 100.0}, // Thailand central
+                {lat: 16.0, lng: 108.0}, // Vietnam central
+                {lat: 21.0, lng: 107.0}, // Vietnam north
+                {lat: 23.0, lng: 105.0}, // China south
+                {lat: 25.0, lng: 102.0}, // Myanmar east
+                {lat: 28.0, lng: 97.0}, // Myanmar north
+                
+                // Indian subcontinent
+                {lat: 28.0, lng: 88.0}, // Bangladesh
+                {lat: 22.0, lng: 88.0}, // Kolkata area
+                {lat: 18.0, lng: 83.0}, // India east coast
+                {lat: 13.0, lng: 80.0}, // Chennai area
+                {lat: 8.0, lng: 77.0}, // Kerala
+                {lat: 15.0, lng: 74.0}, // Goa area
+                {lat: 19.0, lng: 73.0}, // Mumbai area
+                {lat: 23.0, lng: 69.0}, // Gujarat
+                {lat: 25.0, lng: 67.0}, // Pakistan south
+                {lat: 28.0, lng: 67.0}, // Pakistan central
+                {lat: 32.0, lng: 72.0}, // Pakistan north
+                
+                // Central and Western Asia
+                {lat: 37.0, lng: 75.0}, // Afghanistan east
+                {lat: 40.0, lng: 68.0}, // Uzbekistan
+                {lat: 45.0, lng: 52.0}, // Kazakhstan
+                {lat: 47.0, lng: 40.0}, // Russia - Caucasus area
+                {lat: 43.0, lng: 40.0}, // Georgia
+                {lat: 40.0, lng: 45.0}, // Armenia area
+                {lat: 37.0, lng: 35.0}, // Turkey east
+                {lat: 36.0, lng: 30.0}, // Turkey south
+                {lat: 37.0, lng: 27.0}, // Turkey west
+                
+                // Middle East
+                {lat: 33.0, lng: 35.0}, // Lebanon/Syria
+                {lat: 29.0, lng: 48.0}, // Kuwait area
+                {lat: 24.0, lng: 52.0}, // UAE
+                {lat: 16.0, lng: 52.0}, // Oman
+                {lat: 13.0, lng: 44.0}, // Yemen
+                {lat: 18.0, lng: 42.0}, // Saudi Arabia west
+                {lat: 25.0, lng: 37.0}, // Saudi Arabia north
+                {lat: 30.0, lng: 48.0}, // Iraq south
+                {lat: 33.0, lng: 45.0}, // Iraq central
+                {lat: 37.0, lng: 45.0}, // Iraq north
+                
+                // Back to Siberia
+                {lat: 42.0, lng: 50.0}, // Caspian area
+                {lat: 50.0, lng: 58.0}, // Kazakhstan north
+                {lat: 55.0, lng: 75.0}, // Western Siberia
+                {lat: 60.0, lng: 90.0}, // Central Siberia
+                {lat: 65.0, lng: 100.0}, // Northern Siberia
+                {lat: 70.0, lng: 105.0}, // Arctic Siberia
+                {lat: 75.0, lng: 100.0}  // Back to start
+            ];
+            
+            // AUSTRALIA - Detailed coastline
+            // const australia = [
+            //     // Northern coast
+            //     {lat: -11.0, lng: 131.0}, // Darwin area
+            //     {lat: -12.5, lng: 136.0}, // Arnhem Land
+            //     {lat: -14.0, lng: 142.0}, // Gulf of Carpentaria
+            //     {lat: -17.0, lng: 146.0}, // Queensland north
+            //     {lat:
+            
+            // AUSTRALIA - Detailed coastline
+            const australia = [
+                // Northern coast
+                {lat: -11.0, lng: 131.0}, // Arnhem Land
+                {lat: -12.0, lng: 134.0}, // Northern Territory coast
+                {lat: -11.0, lng: 136.0}, // Gove Peninsula
+                {lat: -12.5, lng: 138.0}, // Gulf of Carpentaria west
+                {lat: -13.0, lng: 141.0}, // Gulf of Carpentaria east
+                {lat: -15.0, lng: 145.0}, // Cape York Peninsula
+                
+                // Eastern coast
+                {lat: -16.5, lng: 146.0}, // Cairns area
+                {lat: -20.0, lng: 148.0}, // Whitsundays
+                {lat: -23.0, lng: 150.0}, // Rockhampton
+                {lat: -26.5, lng: 153.0}, // Brisbane area
+                {lat: -28.0, lng: 153.5}, // Gold Coast
+                {lat: -31.5, lng: 152.0}, // New South Wales
+                {lat: -33.8, lng: 151.0}, // Sydney
+                {lat: -35.0, lng: 150.0}, // Canberra coast
+                {lat: -37.8, lng: 145.0}, // Melbourne
+                
+                // Southern coast
+                {lat: -38.5, lng: 142.0}, // Victoria
+                {lat: -40.8, lng: 144.0}, // King Island
+                {lat: -42.5, lng: 147.5}, // Tasmania east
+                {lat: -43.0, lng: 146.0}, // Tasmania south
+                {lat: -41.0, lng: 145.0}, // Tasmania west
+                {lat: -39.0, lng: 143.0}, // Back to Victoria
+                {lat: -35.0, lng: 138.0}, // Adelaide
+                
+                // Western coast
+                {lat: -32.0, lng: 115.8}, // Perth
+                {lat: -28.0, lng: 114.0}, // Geraldton
+                {lat: -25.0, lng: 113.0}, // Shark Bay
+                {lat: -22.0, lng: 114.0}, // Exmouth Gulf
+                {lat: -18.0, lng: 122.0}, // Broome
+                {lat: -14.5, lng: 126.0}, // Kimberley coast
+                {lat: -11.0, lng: 131.0}  // Closing the loop (Arnhem Land)
+            ];
+
+            // NEW GUINEA
+            const newGuinea = [
+                {lat: -2.0, lng: 141.0}, // North coast west
+                {lat: -3.0, lng: 143.0},
+                {lat: -4.0, lng: 147.0}, // North coast east
+                {lat: -6.0, lng: 147.5}, // Southeast
+                {lat: -8.0, lng: 145.0}, // South coast east
+                {lat: -8.0, lng: 142.0}, // South coast west
+                {lat: -6.0, lng: 141.0}, // Closing loop
+            ];
+
+            // NEW ZEALAND - North & South Islands
+            const newZealandNorth = [
+                {lat: -34.5, lng: 172.0}, // Northland
+                {lat: -37.0, lng: 175.0}, // Auckland
+                {lat: -38.0, lng: 178.0}, // East Cape
+                {lat: -39.0, lng: 176.0}, // Hawke’s Bay
+                {lat: -41.0, lng: 174.0}, // Wellington
+                {lat: -39.0, lng: 172.0}, // West coast
+                {lat: -34.5, lng: 172.0}  // Closing
+            ];
+
+            const newZealandSouth = [
+                {lat: -41.0, lng: 174.0}, // North tip
+                {lat: -43.0, lng: 173.0}, // East coast
+                {lat: -45.0, lng: 170.0}, // Otago
+                {lat: -46.5, lng: 167.0}, // Southland
+                {lat: -44.0, lng: 167.0}, // Fiordland
+                {lat: -41.0, lng: 171.0}, // West coast north
+                {lat: -41.0, lng: 174.0}  // Closing
+            ];
+
+    
+            [
+                northAmerica,
+                southAmerica,
+                europe,
+                africa,
+                asia,
+                australia,
+                newGuinea,
+                newZealandNorth,
+                newZealandSouth
+            ].forEach(coords => drawContinent(coords));
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            frameCount++;
+
+            // Smooth rotation interpolation
+            currentRotationX += (targetRotationX - currentRotationX) * 0.05;
+            currentRotationY += (targetRotationY - currentRotationY) * 0.05;
+            
+            if (!isMouseDown) {
+                // Auto-rotation when not interacting
+                const time = Date.now() * 0.0001;
+                targetRotationY += 0.005;
+                targetRotationX = Math.sin(time) * 0.1;
+            }
+            
+            // Apply rotation to sphere group
+            sphereGroup.rotation.x = currentRotationX;
+            sphereGroup.rotation.y = currentRotationY;
+            
+            // Camera gentle movement
+            const time = Date.now() * 0.0008;
+            camera.position.x = Math.cos(time * 0.3) * 2;
+            camera.position.y = Math.sin(time * 0.2) * 1;
+            camera.lookAt(0, 0, 0);
+            
+            // Update cellular automata every 90 frames (slower for better visibility)
+            if (frameCount % 90 === 0) {
+                updateSphericalAutomata();
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Scroll animations
+        function handleScroll() {
+            const sections = document.querySelectorAll('.section');
+            const triggerBottom = window.innerHeight / 5 * 4;
+
+            sections.forEach(section => {
+                const sectionTop = section.getBoundingClientRect().top;
+                if (sectionTop < triggerBottom) {
+                    section.classList.add('visible');
+                }
+            });
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            initThreeJS();
+            handleScroll();
+        });
+
+        window.addEventListener('scroll', handleScroll);
+    </script>
+</body>
+</html>
