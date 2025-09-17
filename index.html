@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vibur&display=swap" rel="stylesheet">
+
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
         
@@ -15,7 +18,7 @@
         }
 
         body {
-            font-family: 'Orbitron', 'Arial', sans-serif;
+            /* font-family: 'Orbitron', 'Arial', sans-serif; */
             background: #0a0a0a;
             color: #ffffff;
             overflow-x: hidden;
@@ -28,46 +31,142 @@
             overflow: hidden;
             background: linear-gradient(135deg, #000000 0%, #1a0066 30%, #660066 60%, #000000 100%);
             cursor: grab;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
         }
 
-        #canvas-container:active {
-            cursor: grabbing;
-        }
-
-        #three-canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Overlay text on canvas */
         .hero-overlay {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
-            z-index: 10;
+            z-index: 10;        
             pointer-events: none;
+            -webkit-transform: translate(-50%, -50%) translateZ(0);
+            transform: translate(-50%, -50%) translateZ(0);
+            will-change: transform;
         }
- 
+
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+        
+        #three-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: absolute;  /* Add this */
+            top: 0;              /* Add this */
+            left: 0;             /* Add this */
+            z-index: 1;          /* Add this - lower than overlay */
+        }
+
         .hero-title {
+            font-family: "Vibur", sans-serif, cursive !important;  
+            /* font-display: swap; */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
             font-size: 4rem;
-            font-weight: 900;
+            font-weight: 400;
             margin-bottom: 1rem;
-            background: linear-gradient(45deg, #ff0080, #00ff80, #0080ff, #ff8000);
-            background-size: 400% 400%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: neonGlow 3s ease infinite;
-            text-shadow:
-                0 0 10px rgba(255, 0, 128, 0.8),
-                0 0 20px rgba(255, 0, 128, 0.6),
-                0 0 30px rgba(255, 0, 128, 0.4),
-                0 0 40px rgba(255, 0, 128, 0.2);
-            filter: drop-shadow(0 0 20px #ff0080);
-            font-family: 'Orbitron', monospace;
             letter-spacing: 3px;
+            position: relative;
+            /* color: #fff; */
+            color: #fd87fd;
+            text-transform: uppercase;
+            text-align: center;
+            line-height: 1;
+            
+            /* Neon glow effect */
+            text-shadow:
+                0 0 7px #fcc,    
+                0 0 10px #fcc,   
+                0 0 21px #fcc, 
+                0 0 42px #f09,
+                0 0 82px #f09,
+                0 0 92px #f09,
+                0 0 102px #f09,
+                0 0 151px #f09;
+                    
+            /* Pulsating animation */
+            animation: pulsate 0.11s ease-in-out infinite alternate;
+            
+            /* Force hardware acceleration and font rendering */
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            -webkit-perspective: 1000px;
+            perspective: 1000px;
+        }
+
+        /* Add the pulsate keyframes */
+        /* @keyframes pulsate {
+            100% {
+                text-shadow:
+                    0 0 4px #fff,
+                    0 0 11px #fff,
+                    0 0 19px #fff,
+                    0 0 40px #f09,
+                    0 0 80px #f09,
+                    0 0 90px #f09,
+                    0 0 100px #f09,
+                    0 0 150px #f09;
+            }
+            
+            0% {
+                text-shadow:
+                    0 0 4px #fff,
+                    0 0 10px #fff,
+                    0 0 18px #fff,
+                    0 0 38px #f09,
+                    0 0 73px #f09,
+                    0 0 80px #f09,
+                    0 0 94px #f09,
+                    0 0 140px #f09;
+            }
+        } */
+
+        @keyframes pulsate {
+            100% {
+                text-shadow:
+                    0 0 4px #fcc,    /* Changed from #fff */
+                    0 0 11px #fcc,   /* Changed from #fff */
+                    0 0 19px #fcc,   /* Changed from #fff */
+                    0 0 40px #f09,
+                    0 0 80px #f09,
+                    0 0 90px #f09,
+                    0 0 100px #f09,
+                    0 0 150px #f09;
+            }
+            
+            0% {
+                text-shadow:
+                    0 0 4px #fcc,    /* Changed from #fff */
+                    0 0 10px #fcc,   /* Changed from #fff */
+                    0 0 18px #fcc,   /* Changed from #fff */
+                    0 0 38px #f09,
+                    0 0 73px #f09,
+                    0 0 80px #f09,
+                    0 0 94px #f09,
+                    0 0 140px #f09;
+            }
+        }
+
+        /* Flicker effect for one letter */
+        .flicker {
+            animation: flickerOff 4s infinite;
+        }
+
+        /* Irregular flicker keyframes */
+        @keyframes flickerOff {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                opacity: 0.95;
+                filter: drop-shadow(0 0 10px #ff0080) brightness(0.8);
+            }
+            20%, 22%, 24%, 55% {
+                opacity: 0.2; 
+                filter: none;
+            }
         }
 
         @keyframes neonGlow {
@@ -77,7 +176,7 @@
             }
             25% { 
                 background-position: 100% 50%;
-                filter: drop-shadow(0 0 20px #00ff80) brightness(1.2);
+                filter: drop-shadow(0 0 20px #00ff80) brightness(1.05);
             }
             50% { 
                 background-position: 100% 100%;
@@ -85,7 +184,7 @@
             }
             75% { 
                 background-position: 0% 100%;
-                filter: drop-shadow(0 0 20px #ff8000) brightness(1.2);
+                filter: drop-shadow(0 0 20px #ff8000) brightness(1.05);
             }
             100% { 
                 background-position: 0% 50%;
@@ -431,11 +530,15 @@
 <body>
     <div id="canvas-container">
         <canvas id="three-canvas"></canvas>
+
         <div class="hero-overlay">
-            <h1 class="hero-title">KHANTRARIAN ENTERPRISES</h1>
+            <h1 class="hero-title">
+                kh<span class="flicker">a</span>ntrarian <br> enterprises
+            </h1>
             <p class="hero-subtitle">(aka Jon Khanlian's Portfolio)</p>
             <p class="hero-subtitle">Machine Learning, Creative, Math, Finance, Film</p>
         </div>
+
         <div class="interaction-hint">
             Drag to rotate • Scroll to explore
         </div>
@@ -1313,224 +1416,6 @@
             
             generation++;
         }
-
-        // function createContinentTexture() {
-        //     const size = 512;
-        //     const canvas = document.createElement('canvas');
-        //     canvas.width = size;
-        //     canvas.height = size;
-        //     const ctx = canvas.getContext('2d');
-            
-        //     // Fill with transparent background
-        //     ctx.clearRect(0, 0, size, size);
-            
-        //     // Set continent outline style
-        //     ctx.strokeStyle = '#00ffff';
-        //     ctx.lineWidth = 2;
-        //     ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
-            
-        //     // Simplified continent outlines (approximate shapes)
-        //     // North America
-        //     ctx.beginPath();
-        //     ctx.moveTo(size * 0.15, size * 0.25);
-        //     ctx.lineTo(size * 0.25, size * 0.2);
-        //     ctx.lineTo(size * 0.35, size * 0.3);
-        //     ctx.lineTo(size * 0.3, size * 0.45);
-        //     ctx.lineTo(size * 0.2, size * 0.4);
-        //     ctx.closePath();
-        //     ctx.fill();
-        //     ctx.stroke();
-            
-        //     // South America
-        //     ctx.beginPath();
-        //     ctx.moveTo(size * 0.25, size * 0.55);
-        //     ctx.lineTo(size * 0.3, size * 0.5);
-        //     ctx.lineTo(size * 0.28, size * 0.75);
-        //     ctx.lineTo(size * 0.22, size * 0.7);
-        //     ctx.closePath();
-        //     ctx.fill();
-        //     ctx.stroke();
-            
-        //     // Europe
-        //     ctx.beginPath();
-        //     ctx.moveTo(size * 0.48, size * 0.25);
-        //     ctx.lineTo(size * 0.52, size * 0.22);
-        //     ctx.lineTo(size * 0.55, size * 0.28);
-        //     ctx.lineTo(size * 0.5, size * 0.32);
-        //     ctx.closePath();
-        //     ctx.fill();
-        //     ctx.stroke();
-            
-        //     // Africa
-        //     ctx.beginPath();
-        //     ctx.moveTo(size * 0.48, size * 0.35);
-        //     ctx.lineTo(size * 0.55, size * 0.32);
-        //     ctx.lineTo(size * 0.58, size * 0.65);
-        //     ctx.lineTo(size * 0.52, size * 0.68);
-        //     ctx.lineTo(size * 0.45, size * 0.55);
-        //     ctx.closePath();
-        //     ctx.fill();
-        //     ctx.stroke();
-            
-        //     // Asia
-        //     ctx.beginPath();
-        //     ctx.moveTo(size * 0.55, size * 0.2);
-        //     ctx.lineTo(size * 0.85, size * 0.15);
-        //     ctx.lineTo(size * 0.9, size * 0.4);
-        //     ctx.lineTo(size * 0.75, size * 0.45);
-        //     ctx.lineTo(size * 0.6, size * 0.35);
-        //     ctx.closePath();
-        //     ctx.fill();
-        //     ctx.stroke();
-            
-        //     // Australia
-        //     ctx.beginPath();
-        //     ctx.moveTo(size * 0.75, size * 0.65);
-        //     ctx.lineTo(size * 0.85, size * 0.62);
-        //     ctx.lineTo(size * 0.88, size * 0.72);
-        //     ctx.lineTo(size * 0.78, size * 0.75);
-        //     ctx.closePath();
-        //     ctx.fill();
-        //     ctx.stroke();
-            
-        //     return new THREE.CanvasTexture(canvas);
-        // }
-        // function createContinentTexture() {
-        //     const size = 512;
-        //     const canvas = document.createElement('canvas');
-        //     canvas.width = size;
-        //     canvas.height = size;
-        //     const ctx = canvas.getContext('2d');
-            
-        //     // Fill with transparent background
-        //     ctx.clearRect(0, 0, size, size);
-            
-        //     // Set continent outline style
-        //     ctx.strokeStyle = '#00ffff';
-        //     ctx.lineWidth = 2;
-        //     ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
-            
-        //     // Helper function to draw smooth curves
-        //     function drawContinentPath(points) {
-        //         ctx.beginPath();
-        //         ctx.moveTo(points[0].x * size, points[0].y * size);
-                
-        //         for (let i = 1; i < points.length - 1; i += 2) {
-        //             const cp = points[i];
-        //             const end = points[i + 1] || points[0];
-        //             ctx.quadraticCurveTo(cp.x * size, cp.y * size, end.x * size, end.y * size);
-        //         }
-                
-        //         ctx.closePath();
-        //         ctx.fill();
-        //         ctx.stroke();
-        //     }
-            
-        //     // North America - More detailed shape
-        //     const northAmerica = [
-        //         {x: 0.08, y: 0.25}, // Alaska start
-        //         {x: 0.12, y: 0.18}, // Alaska curve
-        //         {x: 0.18, y: 0.20}, // Western Canada
-        //         {x: 0.25, y: 0.15}, // Control point
-        //         {x: 0.32, y: 0.18}, // Hudson Bay area
-        //         {x: 0.35, y: 0.22}, // Control point
-        //         {x: 0.38, y: 0.28}, // Eastern Canada
-        //         {x: 0.36, y: 0.35}, // Control point
-        //         {x: 0.34, y: 0.42}, // US East Coast
-        //         {x: 0.32, y: 0.48}, // Florida
-        //         {x: 0.28, y: 0.45}, // Gulf Coast
-        //         {x: 0.22, y: 0.50}, // Mexico
-        //         {x: 0.18, y: 0.48}, // Control point
-        //         {x: 0.15, y: 0.45}, // West Coast
-        //         {x: 0.12, y: 0.38}, // Control point
-        //         {x: 0.10, y: 0.32}, // Pacific Northwest
-        //         {x: 0.08, y: 0.28}  // Back to Alaska
-        //     ];
-        //     drawContinentPath(northAmerica);
-            
-        //     // South America - More realistic shape
-        //     const southAmerica = [
-        //         {x: 0.28, y: 0.52}, // Northern coast
-        //         {x: 0.32, y: 0.50}, // Control point
-        //         {x: 0.36, y: 0.54}, // Venezuela/Guyana
-        //         {x: 0.38, y: 0.58}, // Control point
-        //         {x: 0.37, y: 0.65}, // Brazil bulge
-        //         {x: 0.35, y: 0.72}, // Control point
-        //         {x: 0.32, y: 0.78}, // Argentina
-        //         {x: 0.28, y: 0.82}, // Control point
-        //         {x: 0.24, y: 0.80}, // Chile
-        //         {x: 0.22, y: 0.75}, // Control point
-        //         {x: 0.23, y: 0.68}, // Peru
-        //         {x: 0.25, y: 0.62}, // Control point
-        //         {x: 0.26, y: 0.56}  // Colombia
-        //     ];
-        //     drawContinentPath(southAmerica);
-            
-        //     // Europe - More detailed
-        //     const europe = [
-        //         {x: 0.46, y: 0.22}, // Scandinavia
-        //         {x: 0.50, y: 0.18}, // Control point
-        //         {x: 0.54, y: 0.20}, // Northern Europe
-        //         {x: 0.56, y: 0.25}, // Control point
-        //         {x: 0.55, y: 0.30}, // Central Europe
-        //         {x: 0.52, y: 0.32}, // Control point
-        //         {x: 0.48, y: 0.30}, // Western Europe
-        //         {x: 0.46, y: 0.26}  // Back to start
-        //     ];
-        //     drawContinentPath(europe);
-            
-        //     // Africa - Much more realistic
-        //     const africa = [
-        //         {x: 0.48, y: 0.33}, // North Africa
-        //         {x: 0.52, y: 0.32}, // Control point
-        //         {x: 0.56, y: 0.35}, // Horn of Africa area
-        //         {x: 0.58, y: 0.42}, // Control point
-        //         {x: 0.59, y: 0.50}, // East Africa
-        //         {x: 0.58, y: 0.58}, // Control point
-        //         {x: 0.56, y: 0.65}, // Southern Africa
-        //         {x: 0.52, y: 0.68}, // Control point
-        //         {x: 0.48, y: 0.66}, // Southwest Africa
-        //         {x: 0.45, y: 0.62}, // Control point
-        //         {x: 0.44, y: 0.55}, // West Africa bulge
-        //         {x: 0.46, y: 0.48}, // Control point
-        //         {x: 0.47, y: 0.40}  // Northwest Africa
-        //     ];
-        //     drawContinentPath(africa);
-            
-        //     // Asia - More complex shape
-        //     const asia = [
-        //         {x: 0.56, y: 0.18}, // Siberia
-        //         {x: 0.65, y: 0.15}, // Control point
-        //         {x: 0.75, y: 0.18}, // Eastern Siberia
-        //         {x: 0.82, y: 0.22}, // Control point
-        //         {x: 0.88, y: 0.28}, // Far East
-        //         {x: 0.90, y: 0.35}, // Control point
-        //         {x: 0.87, y: 0.42}, // Southeast Asia
-        //         {x: 0.82, y: 0.45}, // Control point
-        //         {x: 0.75, y: 0.43}, // India/China
-        //         {x: 0.68, y: 0.40}, // Control point
-        //         {x: 0.62, y: 0.35}, // Central Asia
-        //         {x: 0.58, y: 0.28}, // Control point
-        //         {x: 0.56, y: 0.22}  // Back to start
-        //     ];
-        //     drawContinentPath(asia);
-            
-        //     // Australia - More realistic
-        //     const australia = [
-        //         {x: 0.75, y: 0.62}, // Northern coast
-        //         {x: 0.82, y: 0.60}, // Control point
-        //         {x: 0.88, y: 0.64}, // Eastern coast
-        //         {x: 0.90, y: 0.68}, // Control point
-        //         {x: 0.87, y: 0.72}, // Southeastern coast
-        //         {x: 0.82, y: 0.74}, // Control point
-        //         {x: 0.75, y: 0.72}, // Southern coast
-        //         {x: 0.70, y: 0.68}, // Control point
-        //         {x: 0.72, y: 0.64}  // Western coast
-        //     ];
-        //     drawContinentPath(australia);
-            
-        //     return new THREE.CanvasTexture(canvas);
-        // }
 
         function createContinentTexture() {
             const size = 512;
