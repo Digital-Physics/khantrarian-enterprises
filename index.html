@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vibur&display=swap" rel="stylesheet">
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Vibur&display=swap" rel="stylesheet"> -->
 
 
     <style>
@@ -63,12 +63,13 @@
         }
 
         .hero-title {
-            font-family: "Vibur", sans-serif, cursive !important;  
+            /* font-family: "Vibur", sans-serif, cursive !important;   */
             /* font-display: swap; */
+            font-family: Orbitron;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             font-size: 4rem;
-            font-weight: 400;
+            font-weight: bold;
             margin-bottom: 1rem;
             letter-spacing: 3px;
             position: relative;
@@ -160,11 +161,12 @@
         /* Irregular flicker keyframes */
         @keyframes flickerOff {
             0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-                opacity: 0.95;
-                filter: drop-shadow(0 0 10px #ff0080) brightness(0.8);
+                opacity: 0.8;
+                /* filter: drop-shadow(0 0 10px #ff0080) brightness(0.90); */
+                filter: brightness(0.90);
             }
             20%, 22%, 24%, 55% {
-                opacity: 0.2; 
+                opacity: 0.1; 
                 filter: none;
             }
         }
@@ -194,7 +196,7 @@
 
         .hero-subtitle {
             font-size: 1.5rem;
-            color: #00ffff;
+            color: #ffbb00;
             text-shadow: 
                 0 0 5px #00ffff,
                 0 0 10px #00ffff,
@@ -1064,65 +1066,171 @@
             const wireframeSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
             sphereGroup.add(wireframeSphere);
 
-            // --- NEW CODE: Create the glider ---
             createGlider();
-            // --- END NEW CODE ---
 
             animate();
         }
 
-        // --- NEW CODE: Function to create the glider object ---
+        // --- Self-contained Game of Life Glider Function ---
         function createGlider() {
-            // Create a texture for the glider using a 2D canvas
-            const gliderCanvas = document.createElement('canvas');
-            gliderCanvas.width = 64;
-            gliderCanvas.height = 64;
-            const ctx = gliderCanvas.getContext('2d');
-            ctx.fillStyle = '#00ffff'; // Neon cyan color
-            // Draw a simple arrow/chevron shape
-            ctx.beginPath();
-            ctx.moveTo(10, 10);
-            ctx.lineTo(40, 32);
-            ctx.lineTo(10, 54);
-            ctx.lineTo(25, 32);
-            ctx.closePath();
-            ctx.fill();
-            const gliderTexture = new THREE.CanvasTexture(gliderCanvas);
+            // Define the 4 states of the Game of Life glider pattern
+            const gliderStates = [
+                // State 0
+                [
+                    [0, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0],
+                    [0, 0, 0, 1, 0],
+                    [0, 1, 1, 1, 0],
+                    [0, 0, 0, 0, 0]
+                ],
+                // State 1
+                [
+                    [0, 0, 0, 0, 0],
+                    [0, 1, 0, 1, 0],
+                    [0, 0, 1, 1, 0],
+                    [0, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 0]
+                ],
+                // State 2
+                [
+                    [0, 0, 0, 0, 0],
+                    [0, 0, 0, 1, 0],
+                    [0, 1, 0, 1, 0],
+                    [0, 0, 1, 1, 0],
+                    [0, 0, 0, 0, 0]
+                ],
+                // State 3
+                [
+                    [0, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0],
+                    [0, 0, 0, 1, 0],
+                    [0, 1, 1, 1, 0],
+                    [0, 0, 0, 0, 0]
+                ]
+            ];
 
-            // Create a material for the glider
-            const gliderMaterial = new THREE.MeshBasicMaterial({
-                map: gliderTexture,
+            // Internal state variables
+            let currentState = 0;
+            let lastStateChange = Date.now();
+            const stateChangeInterval = 100; // milliseconds between state changes
+            let cellMeshes = [];
+
+            // Create materials
+            const aliveMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffbb00,
                 transparent: true,
-                blending: THREE.AdditiveBlending, // Gives it a nice glow effect
+                opacity: 0.9,
+                blending: THREE.AdditiveBlending,
                 side: THREE.DoubleSide,
-                depthTest: false // Render on top of other objects
+                depthTest: false
+            });
+            
+            const deadMaterial = new THREE.MeshBasicMaterial({
+                color: 0x001122,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide,
+                depthTest: false
             });
 
-            // Create the flat plane geometry for the glider
-            const gliderGeometry = new THREE.PlaneGeometry(1.5, 1.5);
-            const gliderMesh = new THREE.Mesh(gliderGeometry, gliderMaterial);
-
-            // Position the glider just above the sphere's surface
-            gliderMesh.position.set(0, 0, sphereRadius + 0.2);
+            // Create the cellular automata grid group
+            const cellularGroup = new THREE.Group();
             
-            // Orient the glider to face outwards from the center
-            gliderMesh.lookAt(new THREE.Vector3(0, 0, 0));
-            gliderMesh.rotateY(Math.PI); // Flip it to face away from the origin
+            // Create a 5x5 grid of cell meshes
+            const cellSize = 0.15;
+            const gridSize = 5;
+            
+            for (let row = 0; row < gridSize; row++) {
+                cellMeshes[row] = [];
+                for (let col = 0; col < gridSize; col++) {
+                    // Create a small plane for each cell
+                    const cellGeometry = new THREE.PlaneGeometry(cellSize * 0.8, cellSize * 0.8);
+                    const cellMesh = new THREE.Mesh(cellGeometry, deadMaterial);
+                    
+                    // Position the cell in the grid
+                    cellMesh.position.set(
+                        (col - gridSize/2 + 0.5) * cellSize,
+                        (row - gridSize/2 + 0.5) * cellSize,
+                        0
+                    );
+                    
+                    cellMeshes[row][col] = cellMesh;
+                    cellularGroup.add(cellMesh);
+                }
+            }
 
-            // Create a group to manage the glider's orbital path
+            // Function to update the glider state
+            function updateGliderPattern() {
+                const pattern = gliderStates[currentState];
+                
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        const isAlive = pattern[row][col] === 1;
+                        const cell = cellMeshes[row][col];
+                        
+                        if (isAlive) {
+                            cell.material = aliveMaterial;
+                            cell.scale.set(1, 1, 1);
+                        } else {
+                            cell.material = deadMaterial;
+                            cell.scale.set(0.6, 0.6, 1);
+                        }
+                    }
+                }
+            }
+
+            // Position the cellular group just above the sphere's surface
+            cellularGroup.position.set(0, 0, sphereRadius + 0.02);
+
+            // Create an orbital group to manage the glider's path around the sphere
             gliderGroup = new THREE.Group();
-            gliderGroup.add(gliderMesh);
+            gliderGroup.add(cellularGroup);
 
             // Set a tilt on the orbital path to make it more interesting
             gliderGroup.rotation.x = 0.5; // Tilt up/down
             gliderGroup.rotation.z = -0.3; // Tilt left/right
 
-            // Add the glider's orbital group to the main sphere group
-            // so it rotates along with user mouse drags
+            // Add the orbital group to the sphereGroup so it rotates with user interactions
             sphereGroup.add(gliderGroup);
-        }
-        // --- END NEW CODE ---
 
+            // Animation function that gets called automatically
+            function animate() {
+                const now = Date.now();
+                
+                // Animate the orbital motion - simple rotation around Y axis
+                if (gliderGroup) {
+                    gliderGroup.rotation.y += 0.01; // Orbit around the sphere
+                }
+                
+                // Check if it's time to advance to the next state
+                if (now - lastStateChange >= stateChangeInterval) {
+                    currentState = (currentState + 1) % gliderStates.length;
+                    updateGliderPattern();
+                    lastStateChange = now;
+                }
+                
+                // Add subtle pulsing to alive cells
+                const pulseScale = 1 + Math.sin(now * 0.003) * 0.1;
+                const pattern = gliderStates[currentState];
+                
+                for (let row = 0; row < 5; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        if (pattern[row][col] === 1) {
+                            const cell = cellMeshes[row][col];
+                            cell.scale.set(pulseScale, pulseScale, 1);
+                        }
+                    }
+                }
+                
+                // Continue the animation loop
+                requestAnimationFrame(animate);
+            }
+            
+            // Initialize with the first state and start animation
+            updateGliderPattern();
+            animate();
+        }
+        
         // Starfield background
         function createStarfield() {
             const starCount = 2000;
