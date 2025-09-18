@@ -989,18 +989,23 @@
             </div>
         </section>
     </div>
-<script>
-        // Three.js Scene Setup
-        let scene, camera, renderer, animationId;
+
+    <script>
+        // Three.js 3D Cellular Automata on Sphere
+        let scene, camera, renderer, sphere, animationId;
         const sphereRadius = 8;
-        let sphereGroup; // Group to hold the sphere and glider for unified rotation
-        let gliderGroup; // Group to handle the glider's orbital path
+        const gridSize = 24; // Simplified grid size
+        let sphereCells = [];
+        let cellMeshes = [];
+        let generation = 0;
+        let frameCount = 0;
 
         // Mouse interaction variables
         let mouseX = 0, mouseY = 0;
         let targetRotationX = 0, targetRotationY = 0;
         let currentRotationX = 0, currentRotationY = 0;
         let isMouseDown = false;
+        let sphereGroup;
 
         let continentSphere;
 
@@ -1014,9 +1019,12 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setClearColor(0x000428, 0.8);
 
-            // Create sphere group for user-controlled rotation
+            // Create sphere group for rotation
             sphereGroup = new THREE.Group();
             scene.add(sphereGroup);
+
+            // Initialize cellular automata on sphere
+            initSphericalAutomata();
             
             // Camera position
             camera.position.set(0, 0, 20);
@@ -1041,7 +1049,7 @@
             createStarfield();
             setupMouseControls();
 
-            // Create continent outline sphere
+            // Create continent outline sphere (new layer)
             const continentTexture = createContinentTexture();
             const continentGeometry = new THREE.SphereGeometry(sphereRadius - 0.1, 64, 64);
             const continentMaterial = new THREE.MeshBasicMaterial({
@@ -1053,7 +1061,7 @@
             continentSphere = new THREE.Mesh(continentGeometry, continentMaterial);
             sphereGroup.add(continentSphere);
 
-            // Create wireframe sphere as base
+            // Create wireframe sphere as base - more visible
             const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 32, 32);
             const sphereMaterial = new THREE.MeshBasicMaterial({
                 color: 0x00ffff,
@@ -1064,64 +1072,8 @@
             const wireframeSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
             sphereGroup.add(wireframeSphere);
 
-            // --- NEW CODE: Create the glider ---
-            createGlider();
-            // --- END NEW CODE ---
-
             animate();
         }
-
-        // --- NEW CODE: Function to create the glider object ---
-        function createGlider() {
-            // Create a texture for the glider using a 2D canvas
-            const gliderCanvas = document.createElement('canvas');
-            gliderCanvas.width = 64;
-            gliderCanvas.height = 64;
-            const ctx = gliderCanvas.getContext('2d');
-            ctx.fillStyle = '#00ffff'; // Neon cyan color
-            // Draw a simple arrow/chevron shape
-            ctx.beginPath();
-            ctx.moveTo(10, 10);
-            ctx.lineTo(40, 32);
-            ctx.lineTo(10, 54);
-            ctx.lineTo(25, 32);
-            ctx.closePath();
-            ctx.fill();
-            const gliderTexture = new THREE.CanvasTexture(gliderCanvas);
-
-            // Create a material for the glider
-            const gliderMaterial = new THREE.MeshBasicMaterial({
-                map: gliderTexture,
-                transparent: true,
-                blending: THREE.AdditiveBlending, // Gives it a nice glow effect
-                side: THREE.DoubleSide,
-                depthTest: false // Render on top of other objects
-            });
-
-            // Create the flat plane geometry for the glider
-            const gliderGeometry = new THREE.PlaneGeometry(1.5, 1.5);
-            const gliderMesh = new THREE.Mesh(gliderGeometry, gliderMaterial);
-
-            // Position the glider just above the sphere's surface
-            gliderMesh.position.set(0, 0, sphereRadius + 0.2);
-            
-            // Orient the glider to face outwards from the center
-            gliderMesh.lookAt(new THREE.Vector3(0, 0, 0));
-            gliderMesh.rotateY(Math.PI); // Flip it to face away from the origin
-
-            // Create a group to manage the glider's orbital path
-            gliderGroup = new THREE.Group();
-            gliderGroup.add(gliderMesh);
-
-            // Set a tilt on the orbital path to make it more interesting
-            gliderGroup.rotation.x = 0.5; // Tilt up/down
-            gliderGroup.rotation.z = -0.3; // Tilt left/right
-
-            // Add the glider's orbital group to the main sphere group
-            // so it rotates along with user mouse drags
-            sphereGroup.add(gliderGroup);
-        }
-        // --- END NEW CODE ---
 
         // Starfield background
         function createStarfield() {
@@ -1171,8 +1123,6 @@
             
             return new THREE.CanvasTexture(canvas);
         }
-        
-        // --- NOTE: All cellular automata functions have been removed from here ---
 
         function setupMouseControls() {
             const canvas = document.getElementById('three-canvas');
@@ -1212,6 +1162,7 @@
             isMouseDown = false;
         }
 
+        // Touch events
         function onTouchStart(event) {
             event.preventDefault();
             const touch = event.touches[0];
@@ -1240,6 +1191,232 @@
             isMouseDown = false;
         }
 
+
+// New Code to cobmbine
+// This is code that can be added to or modified as needed
+        function initSphericalAutomata() {
+            sphereCells = [];
+            cellMeshes = [];
+            
+            // Create a simplified grid on the sphere surface
+            for (let i = 0; i < gridSize; i++) {
+                sphereCells[i] = [];
+                for (let j = 0; j < gridSize; j++) {
+                    const phi = (i / (gridSize - 1)) * Math.PI; // 0 to PI
+                    const theta = (j / gridSize) * Math.PI * 2; // 0 to 2PI
+                    
+                    const x = sphereRadius * Math.sin(phi) * Math.cos(theta);
+                    const y = sphereRadius * Math.cos(phi);
+                    const z = sphereRadius * Math.sin(phi) * Math.sin(theta);
+                    
+                    const alive = Math.random() < 0.2;
+                    
+                    sphereCells[i][j] = {
+                        alive: alive,
+                        nextState: false,
+                        position: new THREE.Vector3(x, y, z),
+                        phi: phi,
+                        theta: theta
+                    };
+
+                    if (alive) {
+                        createSphereCell(i, j);
+                    }
+                }
+            }
+        }
+
+        // Starfield background
+        function createStarfield() {
+            const starCount = 2000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+
+            for (let i = 0; i < starCount; i++) {
+                const r = 150 + Math.random() * 300;
+                const theta = Math.random() * 2 * Math.PI;
+                const phi = Math.acos(2 * Math.random() - 1);
+
+                const x = r * Math.sin(phi) * Math.cos(theta);
+                const y = r * Math.sin(phi) * Math.sin(theta);
+                const z = r * Math.cos(phi);
+
+                positions.push(x, y, z);
+            }
+
+            geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+
+            const plusSignTexture = createPlusSignTexture();
+
+            const material = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 2,
+                opacity: 0.6,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                map: plusSignTexture
+            });
+
+            const stars = new THREE.Points(geometry, material);
+            scene.add(stars);
+        }
+
+        function createPlusSignTexture() {
+            const size = 32;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const context = canvas.getContext('2d');
+            context.fillStyle = 'white';
+            
+            context.fillRect(size * 0.4, size * 0.1, size * 0.2, size * 0.8);
+            context.fillRect(size * 0.1, size * 0.4, size * 0.8, size * 0.2);
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createSphereCell(i, j) {
+            const cell = sphereCells[i][j];
+            const geometry = new THREE.SphereGeometry(0.15, 8, 8);
+            
+            // const hue = ((i + j + generation * 0.1) % 360) / 360;
+            // const saturation = 0.8 + Math.sin(generation * 0.05) * 0.2;
+            // const lightness = 0.7 + Math.cos(generation * 0.03) * 0.2;
+            
+            // const retroColors = [0xff0080, 0x00ff80, 0x0080ff, 0xff8000, 0x00ffff, 0xff0040, 0x8000ff];
+            // const colorIndex = (i + j + Math.floor(generation * 0.1)) % retroColors.length;
+            // const color = retroColors[colorIndex];
+
+            // Calculate transition from green to orange based on generation
+            const progress = (Math.sin(generation * 0.02) + 1) / 2; // 0 to 1
+            const retroGreen = new THREE.Color(0x00ff80);
+            const retroOrange = new THREE.Color(0xff8000);
+            const color = retroGreen.clone().lerp(retroOrange, progress);
+
+            // const material = new THREE.MeshLambertMaterial({
+            //     color: new THREE.Color().setHSL(hue, saturation, lightness),
+            //     transparent: true,
+            //     opacity: 0.8
+            // });
+
+            const material = new THREE.MeshLambertMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.9,
+                emissive: new THREE.Color(color),
+                emissiveIntensity: 0.3
+            });
+
+            const cellMesh = new THREE.Mesh(geometry, material);
+            cellMesh.position.copy(cell.position);
+            
+            sphereGroup.add(cellMesh);
+            
+            if (!cellMeshes[i]) cellMeshes[i] = [];
+            cellMeshes[i][j] = cellMesh;
+        }
+
+        function removeSphereCell(i, j) {
+            if (cellMeshes[i] && cellMeshes[i][j]) {
+                sphereGroup.remove(cellMeshes[i][j]);
+                cellMeshes[i][j] = null;
+            }
+        }
+
+        function getNeighbors(i, j) {
+            let count = 0;
+            const offsets = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1]];
+            
+            for (const [di, dj] of offsets) {
+                let ni = (i + di + gridSize) % gridSize;
+                let nj = (j + dj + gridSize) % gridSize;
+                
+                // Handle pole wrapping for latitude
+                if (i + di < 0) {
+                    ni = Math.abs(i + di);
+                    nj = (j + gridSize / 2) % gridSize;
+                } else if (i + di >= gridSize) {
+                    ni = gridSize - (i + di - gridSize + 1);
+                    nj = (j + gridSize / 2) % gridSize;
+                }
+                
+                if (sphereCells[ni] && sphereCells[ni][nj] && sphereCells[ni][nj].alive) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        function updateSphericalAutomata() {
+            // Calculate next states
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const neighbors = getNeighbors(i, j);
+                    const cell = sphereCells[i][j];
+                    
+                    // Conway's Game of Life rules
+                    if (cell.alive) {
+                        cell.nextState = neighbors === 2 || neighbors === 3;
+                    } else {
+                        cell.nextState = neighbors === 3;
+                    }
+                    
+                    // Add some randomness for interesting patterns
+                    if (!cell.alive && Math.random() < 0.002) {
+                        cell.nextState = true;
+                    }
+                }
+            }
+
+            // Apply next states
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const cell = sphereCells[i][j];
+                    
+                    if (cell.alive && !cell.nextState) {
+                        removeSphereCell(i, j);
+                        cell.alive = false;
+                    } else if (!cell.alive && cell.nextState) {
+                        createSphereCell(i, j);
+                        cell.alive = true;
+                    } else if (cell.alive && cellMeshes[i] && cellMeshes[i][j]) {
+                        // Update existing cell colors
+                        // const hue = ((i + j + generation * 0.1) % 360) / 360;
+                        // const saturation = 0.8 + Math.sin(generation * 0.05) * 0.2;
+                        // const lightness = 0.7 + Math.cos(generation * 0.03) * 0.2;
+                        
+                        // cellMeshes[i][j].material.color.setHSL(hue, saturation, lightness);
+                        // const retroColors = [0xff0080, 0x00ff80, 0x0080ff, 0xff8000, 0x00ffff, 0xff0040, 0x8000ff];
+                        // const colorIndex = (i + j + Math.floor(generation * 0.1)) % retroColors.length;
+                        // const color = retroColors[colorIndex];
+
+                        // // cellMeshes[i][j].material.color.setHex(color);
+                        // // cellMeshes[i][j].material.emissive.setHex(color);
+
+                        // cellMeshes[i][j].material.color.setHex(color);
+                        // cellMeshes[i][j].material.emissive.setHex(color);
+                        // cellMeshes[i][j].material.emissiveIntensity = 0.3;
+
+                        // Update existing cell colors with same transition
+                        const progress = (Math.sin(generation * 0.02) + 1) / 2;
+                        const retroGreen = new THREE.Color(0x00ff80);
+                        const retroOrange = new THREE.Color(0xff8000);
+                        const color = retroGreen.clone().lerp(retroOrange, progress);
+
+                        cellMeshes[i][j].material.color.copy(color);
+                        cellMeshes[i][j].material.emissive.copy(color);
+                        cellMeshes[i][j].material.emissiveIntensity = 0.3;
+                                                
+                        // Subtle pulsing effect
+                        const scale = 1 + Math.sin(generation * 0.1 + i + j) * 0.2;
+                        cellMeshes[i][j].scale.setScalar(scale);
+                    }
+                }
+            }
+            
+            generation++;
+        }
+
         function createContinentTexture() {
             const size = 512;
             const canvas = document.createElement('canvas');
@@ -1247,12 +1424,15 @@
             canvas.height = size;
             const ctx = canvas.getContext('2d');
             
+            // Fill with transparent background
             ctx.clearRect(0, 0, size, size);
             
+            // Set continent outline style
             ctx.strokeStyle = '#00ffff';
             ctx.lineWidth = 1;
             ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
             
+            // Convert lat/lng to canvas coordinates
             function coordToCanvas(lat, lng) {
                 const x = (lng + 180) / 360;
                 const y = (90 - lat) / 180;
@@ -1262,6 +1442,7 @@
                 };
             }
             
+            // Draw continent from coordinate array
             function drawContinent(coords) {
                 if (coords.length < 3) return;
                 
@@ -1705,6 +1886,15 @@
             ];
             
             // AUSTRALIA - Detailed coastline
+            // const australia = [
+            //     // Northern coast
+            //     {lat: -11.0, lng: 131.0}, // Darwin area
+            //     {lat: -12.5, lng: 136.0}, // Arnhem Land
+            //     {lat: -14.0, lng: 142.0}, // Gulf of Carpentaria
+            //     {lat: -17.0, lng: 146.0}, // Queensland north
+            //     {lat:
+            
+            // AUSTRALIA - Detailed coastline
             const australia = [
                 // Northern coast
                 {lat: -11.0, lng: 131.0}, // Arnhem Land
@@ -1795,8 +1985,9 @@
 
         function animate() {
             animationId = requestAnimationFrame(animate);
+            frameCount++;
 
-            // Smooth rotation interpolation for user drag
+            // Smooth rotation interpolation
             currentRotationX += (targetRotationX - currentRotationX) * 0.05;
             currentRotationY += (targetRotationY - currentRotationY) * 0.05;
             
@@ -1807,22 +1998,20 @@
                 targetRotationX = Math.sin(time) * 0.1;
             }
             
-            // Apply user rotation to the main sphere group
+            // Apply rotation to sphere group
             sphereGroup.rotation.x = currentRotationX;
             sphereGroup.rotation.y = currentRotationY;
-
-            // --- NEW CODE: Animate the glider's orbit ---
-            if (gliderGroup) {
-                // Continuously rotate the glider's orbital group
-                gliderGroup.rotation.y += 0.008; 
-            }
-            // --- END NEW CODE ---
             
             // Camera gentle movement
             const time = Date.now() * 0.0008;
             camera.position.x = Math.cos(time * 0.3) * 2;
             camera.position.y = Math.sin(time * 0.2) * 1;
             camera.lookAt(0, 0, 0);
+            
+            // Update cellular automata every 90 frames (slower for better visibility)
+            if (frameCount % 90 === 0) {
+                updateSphericalAutomata();
+            }
             
             renderer.render(scene, camera);
         }
@@ -1834,7 +2023,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Scroll animations for content sections
+        // Scroll animations
         function handleScroll() {
             const sections = document.querySelectorAll('.section');
             const triggerBottom = window.innerHeight / 5 * 4;
