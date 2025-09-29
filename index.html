@@ -1004,6 +1004,9 @@
         let targetRotationX = 0, targetRotationY = 0;
         let currentRotationX = 0, currentRotationY = 0;
         let isMouseDown = false;
+        // let touchStartX = 0, touchStartY = 0;
+        // let isVerticalScroll = false;
+        let isScrollZone = false;
 
         let continentSphere;
 
@@ -1325,17 +1328,31 @@
         }
 
         function onTouchStart(event) {
-            // event.preventDefault();
-            const touch = event.touches[0];
-            mouseX = touch.clientX;
-            mouseY = touch.clientY;
             isMouseDown = true;
+            const touch = event.touches[0];
+            
+            // Define the scroll zone (e.g., bottom 20% of the screen)
+            const scrollThreshold = window.innerHeight * 0.80;
+
+            // Check if the touch started inside the scroll zone
+            if (touch.clientY > scrollThreshold) {
+                isScrollZone = true;
+            } else {
+                isScrollZone = false;
+                // Only set rotation coordinates if we are NOT in the scroll zone
+                mouseX = touch.clientX;
+                mouseY = touch.clientY;
+            }
         }
 
         function onTouchMove(event) {
-            // event.preventDefault();
-            if (!isMouseDown) return;
+            // Only proceed if the mouse is down AND we are not in the scroll zone
+            if (!isMouseDown || isScrollZone) return;
             
+            // If we are here, it means we are in the globe control zone.
+            // So, we prevent the default scroll action.
+            event.preventDefault();
+
             const touch = event.touches[0];
             const deltaX = touch.clientX - mouseX;
             const deltaY = touch.clientY - mouseY;
@@ -1348,8 +1365,8 @@
         }
 
         function onTouchEnd(event) {
-            event.preventDefault();
             isMouseDown = false;
+            isScrollZone = false; // Reset the flag
         }
 
         function animate() {
