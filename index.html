@@ -535,11 +535,12 @@
     </style>
 </head>
 <body>
-    <div id="loading-placeholder">
-        <div class="ring"></div>
-        <p>Loading...</p>
-    </div>
+
     <div id="canvas-container">
+        <div id="loading-placeholder">
+            <div class="ring"></div>
+            <!-- <p>Loading...</p> -->
+        </div>
         <canvas id="three-canvas"></canvas>
 
         <div class="hero-overlay">
@@ -1018,7 +1019,6 @@
         let isScrollZone = false;
 
         const loaderEl = document.getElementById('loading-placeholder');
-        // const textureLoader = new THREE.TextureLoader();
 
         let continentSphere;
 
