@@ -56,10 +56,10 @@
             display: block;
             width: 100%;
             height: 100%;
-            position: absolute;  /* Add this */
-            top: 0;              /* Add this */
-            left: 0;             /* Add this */
-            z-index: 1;          /* Add this - lower than overlay */
+            position: absolute;  
+            top: 0;             
+            left: 0;             
+            z-index: 1;         
         }
 
         .hero-title {
@@ -99,33 +99,6 @@
             -webkit-perspective: 1000px;
             perspective: 1000px;
         }
-
-        /* Add the pulsate keyframes */
-        /* @keyframes pulsate {
-            100% {
-                text-shadow:
-                    0 0 4px #fff,
-                    0 0 11px #fff,
-                    0 0 19px #fff,
-                    0 0 40px #f09,
-                    0 0 80px #f09,
-                    0 0 90px #f09,
-                    0 0 100px #f09,
-                    0 0 150px #f09;
-            }
-            
-            0% {
-                text-shadow:
-                    0 0 4px #fff,
-                    0 0 10px #fff,
-                    0 0 18px #fff,
-                    0 0 38px #f09,
-                    0 0 73px #f09,
-                    0 0 80px #f09,
-                    0 0 94px #f09,
-                    0 0 140px #f09;
-            }
-        } */
 
         @keyframes pulsate {
             100% {
@@ -519,6 +492,38 @@
             text-shadow: 0 0 5px #00ffff;
         }
 
+        #loading-placeholder {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-family: monospace;
+            color: #0ff;
+            z-index: 11;
+        }
+
+        .ring {
+            width: 100px;
+            height: 100px;
+            border: 3px solid rgba(0,255,255,0.3);
+            border-top: 3px solid #0ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 15px #0ff;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg);}
+            100% { transform: rotate(360deg);}
+        }
+
+        #loading-placeholder p {
+            margin-top: 10px;
+            font-size: 14px;
+            text-shadow: 0 0 5px #0ff, 0 0 15px #0ff;
+        }
+
         @media (max-width: 768px) {
             .hero-title { font-size: 2.5rem; }
             .hero-subtitle { font-size: 1.2rem; }
@@ -530,6 +535,10 @@
     </style>
 </head>
 <body>
+    <div id="loading-placeholder">
+        <div class="ring"></div>
+        <p>Loading...</p>
+    </div>
     <div id="canvas-container">
         <canvas id="three-canvas"></canvas>
 
@@ -1008,6 +1017,9 @@
         // let isVerticalScroll = false;
         let isScrollZone = false;
 
+        const loaderEl = document.getElementById('loading-placeholder');
+        // const textureLoader = new THREE.TextureLoader();
+
         let continentSphere;
 
         function initThreeJS() {
@@ -1076,7 +1088,105 @@
             createGlider();
 
             animate();
+            loaderEl.style.display = 'none';
         }
+
+        // function initThreeJS() {
+        //     const container = document.getElementById('canvas-container');
+        //     const canvas = document.getElementById('three-canvas');
+            
+        //     scene = new THREE.Scene();
+        //     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        //     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+        //     renderer.setSize(window.innerWidth, window.innerHeight);
+        //     renderer.setClearColor(0x000428, 0.8);
+
+        //     sphereGroup = new THREE.Group();
+        //     scene.add(sphereGroup);
+
+        //     camera.position.set(0, 0, 20);
+        //     camera.lookAt(0, 0, 0);
+
+        //     // Lighting
+        //     const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+        //     scene.add(ambientLight);
+
+        //     const lights = [
+        //         { color: 0xff0080, pos: [10, 10, 5] },
+        //         { color: 0x00ff80, pos: [-10, -10, 5] },
+        //         { color: 0x0080ff, pos: [0, 10, -10] }
+        //     ];
+        //     lights.forEach(l => {
+        //         const d = new THREE.DirectionalLight(l.color, 1.0);
+        //         d.position.set(...l.pos);
+        //         scene.add(d);
+        //     });
+
+        //     createStarfield();
+        //     setupMouseControls();
+
+        //     // --- PLACEHOLDER: neon wireframe globe ---
+        //     const placeholderGeo = new THREE.SphereGeometry(6, 16, 16);
+        //     const placeholderMat = new THREE.MeshBasicMaterial({
+        //         color: 0x00ffff,
+        //         wireframe: true,
+        //         transparent: true,
+        //         opacity: 0.3
+        //     });
+        //     placeholderSphere = new THREE.Mesh(placeholderGeo, placeholderMat);
+        //     sphereGroup.add(placeholderSphere);
+
+        //     // Animate pulsing scale
+        //     let pulse = 0;
+        //     function animatePlaceholder() {
+        //         pulse += 0.05;
+        //         placeholderSphere.scale.setScalar(1 + Math.sin(pulse) * 0.05);
+        //     }
+
+        //     // --- LOAD REAL TEXTURE ---
+        //     const textureLoader = new THREE.TextureLoader();
+        //     textureLoader.load(
+        //         './img/continents.png',
+        //         (continentTexture) => {
+        //             // Texture loaded -> replace placeholder
+        //             sphereGroup.remove(placeholderSphere);
+
+        //             const continentGeometry = new THREE.SphereGeometry(6 - 0.1, 64, 64);
+        //             const continentMaterial = new THREE.MeshBasicMaterial({
+        //                 map: continentTexture,
+        //                 transparent: true,
+        //                 opacity: 0.8,
+        //                 side: THREE.DoubleSide
+        //             });
+        //             continentSphere = new THREE.Mesh(continentGeometry, continentMaterial);
+        //             sphereGroup.add(continentSphere);
+
+        //             const sphereGeometry = new THREE.SphereGeometry(6, 32, 32);
+        //             const sphereMaterial = new THREE.MeshBasicMaterial({
+        //                 color: 0x00ffff,
+        //                 wireframe: true,
+        //                 transparent: true,
+        //                 opacity: 0.15
+        //             });
+        //             const wireframeSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        //             sphereGroup.add(wireframeSphere);
+
+        //             createGlider();
+        //         }
+        //     );
+
+        //     function animate() {
+        //         requestAnimationFrame(animate);
+        //         sphereGroup.rotation.y += 0.002;
+
+        //         if (placeholderSphere) {
+        //             animatePlaceholder();
+        //         }
+
+        //         renderer.render(scene, camera);
+        //     }
+        //     animate();
+        // }
 
         // --- Self-contained Game of Life Glider Function ---
         function createGlider() {
