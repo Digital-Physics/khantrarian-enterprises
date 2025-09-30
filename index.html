@@ -1064,7 +1064,8 @@
             // Create continent outline sphere
             // const continentTexture = createContinentTexture();
             const textureLoader = new THREE.TextureLoader();
-            const continentTexture = textureLoader.load('./img/continents.png'); 
+            // const continentTexture = textureLoader.load('./img/continents.png'); 
+            const continentTexture = createContinentTexture();
 
             const continentGeometry = new THREE.SphereGeometry(sphereRadius - 0.1, 64, 64);
             const continentMaterial = new THREE.MeshBasicMaterial({
@@ -1093,102 +1094,557 @@
             loaderEl.style.display = 'none';
         }
 
-        // function initThreeJS() {
-        //     const container = document.getElementById('canvas-container');
-        //     const canvas = document.getElementById('three-canvas');
+        function createContinentTexture() {
+            const size = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
             
-        //     scene = new THREE.Scene();
-        //     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        //     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-        //     renderer.setSize(window.innerWidth, window.innerHeight);
-        //     renderer.setClearColor(0x000428, 0.8);
+            ctx.clearRect(0, 0, size, size);
+            
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
+            
+            function coordToCanvas(lat, lng) {
+                const x = (lng + 180) / 360;
+                const y = (90 - lat) / 180;
+                return {
+                    x: x * size,
+                    y: y * size
+                };
+            }
+            
+            function drawContinent(coords) {
+                if (coords.length < 3) return;
+                
+                ctx.beginPath();
+                const firstPoint = coordToCanvas(coords[0].lat, coords[0].lng);
+                ctx.moveTo(firstPoint.x, firstPoint.y);
+                
+                for (let i = 1; i < coords.length; i++) {
+                    const point = coordToCanvas(coords[i].lat, coords[i].lng);
+                    ctx.lineTo(point.x, point.y);
+                }
+                
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+            
+            // NORTH AMERICA - Detailed coastline
+            const northAmerica = [
+                // Alaska and Northern Canada
+                {lat: 71.0, lng: -156.0}, // Point Barrow, Alaska
+                {lat: 70.2, lng: -148.5},
+                {lat: 69.5, lng: -140.0},
+                {lat: 68.8, lng: -133.0},
+                {lat: 69.0, lng: -125.0}, // Mackenzie Delta
+                {lat: 69.5, lng: -120.0},
+                {lat: 70.0, lng: -115.0},
+                {lat: 69.8, lng: -108.0},
+                {lat: 69.2, lng: -105.0}, // Victoria Island area
+                {lat: 68.5, lng: -100.0},
+                {lat: 67.8, lng: -95.0},
+                {lat: 66.5, lng: -85.0}, // Hudson Bay entrance
+                
+                // Eastern Canada
+                {lat: 64.2, lng: -75.0}, // Baffin Island
+                {lat: 62.0, lng: -70.0},
+                {lat: 60.0, lng: -65.0}, // Labrador
+                {lat: 58.5, lng: -62.0},
+                {lat: 55.0, lng: -60.0}, // Newfoundland area
+                {lat: 51.0, lng: -55.0},
+                {lat: 47.5, lng: -52.5}, // Newfoundland
+                {lat: 46.0, lng: -60.0}, // Nova Scotia
+                {lat: 45.5, lng: -66.0}, // New Brunswick
+                {lat: 45.0, lng: -67.5}, // Maine
+                
+                // US East Coast
+                {lat: 44.0, lng: -69.0}, // Maine coast
+                {lat: 42.5, lng: -70.5}, // Boston area
+                {lat: 41.0, lng: -71.5}, // Rhode Island
+                {lat: 40.5, lng: -74.0}, // New York
+                {lat: 39.5, lng: -75.0}, // Philadelphia
+                {lat: 38.0, lng: -75.5}, // Chesapeake Bay
+                {lat: 36.0, lng: -75.8}, // North Carolina
+                {lat: 33.5, lng: -78.0}, // South Carolina
+                {lat: 32.0, lng: -81.0}, // Georgia
+                {lat: 30.0, lng: -81.5}, // Florida northeast
+                {lat: 28.0, lng: -80.5}, // Florida east
+                {lat: 25.5, lng: -80.0}, // Miami
+                {lat: 24.5, lng: -81.5}, // Florida Keys
+                {lat: 25.0, lng: -82.0}, // Florida southwest
+                {lat: 26.0, lng: -82.5}, // Tampa area
+                
+                // Gulf Coast
+                {lat: 28.0, lng: -84.0}, // Florida panhandle
+                {lat: 30.5, lng: -88.0}, // Alabama
+                {lat: 29.0, lng: -90.0}, // Louisiana
+                {lat: 29.5, lng: -94.0}, // Texas east
+                {lat: 28.5, lng: -96.0}, // Houston area
+                {lat: 27.5, lng: -97.5}, // Corpus Christi
+                {lat: 26.0, lng: -97.0}, // South Texas
+                
+                // Mexico
+                {lat: 25.8, lng: -97.5}, // Brownsville area
+                {lat: 24.0, lng: -98.0},
+                {lat: 22.0, lng: -98.5}, // Tampico area
+                {lat: 20.5, lng: -97.0}, // Veracruz
+                {lat: 18.0, lng: -94.0}, // Tabasco
+                {lat: 16.0, lng: -92.5}, // Chiapas
+                {lat: 14.5, lng: -92.0}, // Guatemala border
+                {lat: 16.0, lng: -95.0}, // Oaxaca
+                {lat: 18.0, lng: -103.0}, // Jalisco
+                {lat: 20.5, lng: -105.0}, // Puerto Vallarta
+                {lat: 23.0, lng: -109.5}, // Baja California Sur
+                {lat: 28.0, lng: -114.0}, // Baja California
+                {lat: 32.5, lng: -117.0}, // Tijuana
+                
+                // US West Coast
+                {lat: 32.7, lng: -117.2}, // San Diego
+                {lat: 34.0, lng: -118.5}, // Los Angeles
+                {lat: 36.0, lng: -121.5}, // Monterey
+                {lat: 37.8, lng: -122.4}, // San Francisco
+                {lat: 40.0, lng: -124.0}, // Northern California
+                {lat: 42.0, lng: -124.5}, // Oregon
+                {lat: 45.5, lng: -124.0}, // Oregon coast
+                {lat: 47.5, lng: -124.5}, // Washington
+                {lat: 48.5, lng: -125.0}, // Olympic Peninsula
+                {lat: 49.0, lng: -125.5}, // Vancouver Island area
+                
+                // Western Canada and Alaska
+                {lat: 51.0, lng: -128.0}, // British Columbia
+                {lat: 54.0, lng: -130.0},
+                {lat: 56.5, lng: -132.5}, // Southeast Alaska
+                {lat: 58.0, lng: -134.0}, // Juneau area
+                {lat: 59.5, lng: -139.0}, // Gulf of Alaska
+                {lat: 60.5, lng: -146.0}, // Prince William Sound
+                {lat: 61.0, lng: -150.0}, // Anchorage area
+                {lat: 60.5, lng: -151.0}, // Kenai Peninsula
+                {lat: 59.0, lng: -154.0}, // Alaska Peninsula start
+                {lat: 57.0, lng: -158.0}, // Alaska Peninsula
+                {lat: 55.0, lng: -162.0}, // Aleutians start
+                {lat: 60.0, lng: -165.0}, // Western Alaska
+                {lat: 65.0, lng: -167.0}, // Seward Peninsula
+                {lat: 68.0, lng: -166.0}, // North Alaska
+                {lat: 70.0, lng: -160.0}  // Back toward Point Barrow
+            ];
+            
+            // SOUTH AMERICA - Detailed coastline
+            const southAmerica = [
+                // Northern coast
+                {lat: 12.0, lng: -68.5}, // Venezuela
+                {lat: 11.5, lng: -66.0},
+                {lat: 10.5, lng: -64.0}, // Trinidad area
+                {lat: 8.5, lng: -60.0}, // Guyana
+                {lat: 6.0, lng: -57.5}, // Suriname
+                {lat: 4.0, lng: -54.0}, // French Guiana
+                {lat: 2.0, lng: -51.0}, // Brazil north
+                {lat: 0.5, lng: -49.0}, // Amazon mouth
+                {lat: -2.0, lng: -41.0}, // Brazil northeast
+                {lat: -5.0, lng: -35.0}, // Natal area
+                {lat: -8.0, lng: -35.0}, // Recife area
+                {lat: -12.0, lng: -37.0}, // Salvador area
+                {lat: -15.0, lng: -39.0},
+                {lat: -18.0, lng: -39.5}, // Vitória area
+                {lat: -22.0, lng: -42.0}, // Rio de Janeiro
+                {lat: -24.0, lng: -46.0}, // São Paulo area
+                {lat: -26.0, lng: -48.5}, // Santa Catarina
+                {lat: -30.0, lng: -50.0}, // Rio Grande do Sul
+                {lat: -34.0, lng: -53.0}, // Uruguay
+                {lat: -35.0, lng: -57.0}, // Argentina - Rio de la Plata
+                
+                // Argentina coast
+                {lat: -36.0, lng: -56.5}, // Buenos Aires area
+                {lat: -38.0, lng: -57.5}, // Mar del Plata area
+                {lat: -40.0, lng: -62.0}, // Patagonia
+                {lat: -42.0, lng: -63.5},
+                {lat: -45.0, lng: -66.0}, // Santa Cruz
+                {lat: -48.0, lng: -66.0},
+                {lat: -50.0, lng: -68.0},
+                {lat: -52.0, lng: -68.5}, // Strait of Magellan
+                {lat: -54.0, lng: -67.0}, // Tierra del Fuego
+                {lat: -55.0, lng: -67.0}, // Cape Horn area
+                
+                // Chile coast (going north)
+                {lat: -53.0, lng: -71.0}, // Southern Chile
+                {lat: -50.0, lng: -74.0},
+                {lat: -47.0, lng: -74.5}, // Chilean fjords
+                {lat: -44.0, lng: -73.5},
+                {lat: -40.0, lng: -73.0}, // Valdivia area
+                {lat: -36.0, lng: -72.5}, // Concepción area
+                {lat: -33.0, lng: -71.5}, // Santiago/Valparaíso
+                {lat: -30.0, lng: -71.0}, // La Serena area
+                {lat: -27.0, lng: -70.5}, // Atacama
+                {lat: -24.0, lng: -70.0}, // Antofagasta
+                {lat: -20.0, lng: -70.0}, // Iquique area
+                {lat: -18.0, lng: -70.5}, // Arica
+                
+                // Peru coast
+                {lat: -16.0, lng: -72.0}, // Southern Peru
+                {lat: -12.0, lng: -77.0}, // Lima
+                {lat: -8.0, lng: -79.0}, // Northern Peru
+                {lat: -4.0, lng: -81.0}, // Ecuador border
+                
+                // Ecuador coast
+                {lat: -2.0, lng: -80.5}, // Guayaquil
+                {lat: 1.0, lng: -79.5}, // Northern Ecuador
+                
+                // Colombia coast
+                {lat: 2.5, lng: -78.0}, // Southern Colombia
+                {lat: 4.0, lng: -77.0}, // Buenaventura area
+                {lat: 6.0, lng: -77.5}, // Medellín area
+                {lat: 8.0, lng: -76.0}, // Cartagena area
+                {lat: 10.0, lng: -75.0}, // Barranquilla
+                {lat: 11.0, lng: -72.0}, // Maracaibo area
+                {lat: 12.0, lng: -70.0}  // Back to Venezuela
+            ];
+            
+            // EUROPE - Detailed coastline
+            const europe = [
+                // Scandinavia
+                {lat: 71.0, lng: 25.8}, // North Cape, Norway
+                {lat: 70.5, lng: 23.0},
+                {lat: 69.0, lng: 18.0}, // Northern Norway
+                {lat: 68.0, lng: 15.0},
+                {lat: 67.0, lng: 12.0}, // Lofoten area
+                {lat: 65.0, lng: 10.0}, // Trondheim area
+                {lat: 62.0, lng: 5.0}, // Bergen area
+                {lat: 59.0, lng: 5.0}, // Stavanger
+                {lat: 58.0, lng: 7.0}, // Southern Norway
+                {lat: 57.5, lng: 10.0}, // Denmark north
+                {lat: 55.5, lng: 12.0}, // Copenhagen area
+                
+                // Baltic Sea region
+                {lat: 54.5, lng: 13.0}, // Germany north
+                {lat: 54.0, lng: 14.0}, // Poland coast
+                {lat: 55.0, lng: 17.0}, // Poland north
+                {lat: 56.0, lng: 21.0}, // Lithuania
+                {lat: 57.5, lng: 24.0}, // Latvia
+                {lat: 59.0, lng: 26.0}, // Estonia
+                {lat: 60.0, lng: 28.0}, // Finland south
+                {lat: 65.0, lng: 25.0}, // Finland north
+                {lat: 69.0, lng: 30.0}, // Finland-Russia border
+                
+                // Russia (European part)
+                {lat: 68.0, lng: 33.0}, // Murmansk area
+                {lat: 66.0, lng: 40.0}, // White Sea
+                {lat: 64.0, lng: 45.0}, // Arkhangelsk area
+                {lat: 60.0, lng: 50.0}, // Perm area
+                {lat: 55.0, lng: 48.0}, // Kazan area
+                {lat: 50.0, lng: 40.0}, // Voronezh area
+                {lat: 47.0, lng: 39.0}, // Rostov area
+                {lat: 45.0, lng: 37.0}, // Krasnodar
+                
+                // Black Sea
+                {lat: 44.0, lng: 34.0}, // Crimea
+                {lat: 43.0, lng: 28.0}, // Bulgaria
+                {lat: 42.0, lng: 28.0}, // Turkey north
+                {lat: 41.0, lng: 29.0}, // Istanbul area
+                {lat: 40.0, lng: 26.0}, // Western Turkey
+                {lat: 39.0, lng: 23.0}, // Northern Greece
+                {lat: 38.0, lng: 21.0}, // Western Greece
+                {lat: 37.0, lng: 22.0}, // Peloponnese
+                {lat: 35.0, lng: 25.0}, // Crete
+                {lat: 37.0, lng: 15.0}, // Sicily
+                
+                // Italy
+                {lat: 38.0, lng: 16.0}, // Calabria
+                {lat: 40.0, lng: 18.0}, // Puglia
+                {lat: 42.0, lng: 17.0}, // Adriatic coast
+                {lat: 45.5, lng: 13.0}, // Venice area
+                {lat: 44.0, lng: 8.0}, // Genoa area
+                {lat: 43.0, lng: 7.0}, // French Riviera
+                
+                // France
+                {lat: 43.5, lng: 3.0}, // Montpellier area
+                {lat: 44.0, lng: -1.0}, // Bordeaux area
+                {lat: 46.0, lng: -2.0}, // Western France
+                {lat: 48.5, lng: -4.0}, // Brittany
+                {lat: 50.0, lng: 1.5}, // English Channel
+                
+                // Britain
+                {lat: 51.0, lng: 1.0}, // Dover area
+                {lat: 52.0, lng: 1.5}, // East England
+                {lat: 55.0, lng: 0.0}, // Northeast England
+                {lat: 58.5, lng: -3.0}, // Scotland
+                {lat: 59.0, lng: -6.0}, // Scotland west
+                {lat: 57.0, lng: -7.0}, // Scotland islands
+                {lat: 55.0, lng: -5.0}, // Western Scotland
+                {lat: 52.0, lng: -5.0}, // Wales
+                {lat: 50.0, lng: -5.0}, // Southwest England
+                {lat: 49.0, lng: -2.0}, // English Channel islands
+                
+                // Back to Iberia
+                {lat: 44.0, lng: -2.0}, // Northern Spain
+                {lat: 43.5, lng: -8.0}, // Galicia
+                {lat: 42.0, lng: -9.0}, // Portugal north
+                {lat: 39.0, lng: -9.5}, // Lisbon area
+                {lat: 37.0, lng: -9.0}, // Southern Portugal
+                {lat: 36.0, lng: -6.0}, // Southern Spain
+                {lat: 36.0, lng: -2.5}, // Almería area
+                {lat: 37.0, lng: 0.0}, // Valencia area
+                {lat: 41.0, lng: 3.0}, // Barcelona area
+                {lat: 43.0, lng: 2.0}, // French border
+                {lat: 45.0, lng: 6.0}, // Alps area
+                {lat: 47.0, lng: 8.0}, // Switzerland area
+                {lat: 48.0, lng: 11.0}, // Munich area
+                {lat: 50.0, lng: 14.0}, // Prague area
+                {lat: 52.0, lng: 20.0}, // Warsaw area
+                {lat: 54.0, lng: 18.0}, // Gdansk area
+                {lat: 56.0, lng: 13.0}, // Southern Sweden
+                {lat: 59.0, lng: 11.0}, // Oslo area
+                {lat: 62.0, lng: 6.0}, // Western Norway
+                {lat: 65.0, lng: 12.0}, // Central Norway
+                {lat: 68.0, lng: 16.0}, // Northern Norway
+                {lat: 70.0, lng: 20.0}, // Far north
+                {lat: 71.0, lng: 25.0}  // Back to North Cape
+            ];
+            
+            // AFRICA - Detailed coastline
+            const africa = [
+                // North Africa - Mediterranean
+                {lat: 37.0, lng: -6.0}, // Morocco - Strait of Gibraltar
+                {lat: 36.0, lng: -5.5}, // Spanish Morocco area
+                {lat: 35.5, lng: -2.0}, // Morocco Mediterranean
+                {lat: 37.0, lng: 3.0}, // Algeria
+                {lat: 37.0, lng: 8.0}, // Tunisia
+                {lat: 34.0, lng: 11.0}, // Tunisia south
+                {lat: 33.0, lng: 13.0}, // Libya west
+                {lat: 32.5, lng: 20.0}, // Libya central
+                {lat: 32.0, lng: 25.0}, // Libya east
+                {lat: 31.0, lng: 32.0}, // Egypt - Alexandria
+                {lat: 30.0, lng: 33.0}, // Nile Delta
+                
+                // Red Sea coast
+                {lat: 27.0, lng: 34.0}, // Egypt Red Sea
+                {lat: 24.0, lng: 37.0}, // Sudan Red Sea
+                {lat: 20.0, lng: 37.5}, // Sudan central Red Sea
+                {lat: 16.0, lng: 39.0}, // Sudan south Red Sea
+                {lat: 13.0, lng: 43.0}, // Eritrea
+                {lat: 11.5, lng: 43.0}, // Djibouti
+                {lat: 10.0, lng: 45.0}, // Somalia north
+                {lat: 5.0, lng: 48.0}, // Somalia central
+                {lat: 2.0, lng: 45.0}, // Somalia south
+                {lat: -1.0, lng: 41.0}, // Kenya
+                {lat: -4.0, lng: 40.0}, // Tanzania north
+                {lat: -8.0, lng: 39.0}, // Tanzania central
+                {lat: -10.0, lng: 40.0}, // Tanzania south
+                
+                // East Africa
+                {lat: -12.0, lng: 35.0}, // Mozambique north
+                {lat: -16.0, lng: 37.0}, // Mozambique central
+                {lat: -20.0, lng: 35.0}, // Mozambique south
+                {lat: -23.0, lng: 35.0}, // South Africa northeast
+                {lat: -26.0, lng: 33.0}, // Durban area
+                {lat: -29.0, lng: 31.0}, // South Africa east
+                {lat: -31.0, lng: 30.0}, // Port Elizabeth area
+                {lat: -34.0, lng: 25.0}, // Cape area east
+                {lat: -34.5, lng: 20.0}, // Cape Town area
+                {lat: -33.0, lng: 18.0}, // Cape of Good Hope
+                
+                // West coast
+                {lat: -29.0, lng: 17.0}, // Namibia south
+                {lat: -25.0, lng: 15.0}, // Namibia central
+                {lat: -20.0, lng: 13.0}, // Namibia north
+                {lat: -17.0, lng: 12.0}, // Angola south
+                {lat: -12.0, lng: 13.0}, // Angola central
+                {lat: -8.0, lng: 13.0}, // Angola north
+                {lat: -5.0, lng: 12.0}, // Congo
+                {lat: -1.0, lng: 9.0}, // Gabon
+                {lat: 1.0, lng: 9.0}, // Equatorial Guinea
+                {lat: 3.0, lng: 8.0}, // Cameroon
+                {lat: 5.0, lng: 5.0}, // Nigeria south
+                {lat: 6.0, lng: 3.0}, // Lagos area
+                {lat: 6.0, lng: 1.0}, // Benin
+                {lat: 6.0, lng: -1.0}, // Ghana
+                {lat: 5.0, lng: -3.0}, // Côte d'Ivoire
+                {lat: 6.0, lng: -8.0}, // Liberia
+                {lat: 8.0, lng: -12.0}, // Sierra Leone
+                {lat: 9.0, lng: -14.0}, // Guinea
+                {lat: 11.0, lng: -17.0}, // Guinea-Bissau
+                {lat: 13.0, lng: -17.0}, // Senegal south
+                {lat: 16.0, lng: -16.0}, // Senegal north
+                {lat: 21.0, lng: -17.0}, // Western Sahara
+                {lat: 28.0, lng: -12.0}, // Morocco Atlantic south
+                {lat: 32.0, lng: -9.0}, // Morocco Atlantic central
+                {lat: 34.0, lng: -7.0}, // Morocco Atlantic north
+                {lat: 36.0, lng: -6.0}  // Back to Gibraltar
+            ];
+            
+            // ASIA - Detailed coastline (focusing on key features)
+            const asia = [
+                // Northern Siberia
+                {lat: 77.0, lng: 104.0}, // Severnaya Zemlya
+                {lat: 76.0, lng: 110.0},
+                {lat: 75.0, lng: 125.0}, // New Siberian Islands
+                {lat: 73.0, lng: 140.0},
+                {lat: 71.0, lng: 155.0}, // Chukotka
+                {lat: 66.0, lng: 170.0}, // Bering Strait
+                {lat: 60.0, lng: 166.0}, // Kamchatka north
+                {lat: 53.0, lng: 160.0}, // Kamchatka south
+                {lat: 46.0, lng: 142.0}, // Sakhalin
+                {lat: 43.0, lng: 132.0}, // Vladivostok area
+                
+                // East Asia
+                {lat: 40.0, lng: 124.0}, // North Korea
+                {lat: 37.5, lng: 125.0}, // South Korea
+                {lat: 35.0, lng: 130.0}, // Japan area (simplified)
+                {lat: 31.0, lng: 121.0}, // Shanghai area
+                {lat: 26.0, lng: 120.0}, // East China Sea
+                {lat: 22.0, lng: 114.0}, // Hong Kong area
+                {lat: 18.0, lng: 109.0}, // Hainan
+                {lat: 10.0, lng: 107.0}, // Vietnam
+                {lat: 1.0, lng: 104.0}, // Singapore area
+                
+                // Southeast Asia
+                {lat: -8.0, lng: 115.0}, // Indonesia (Bali area)
+                {lat: -6.0, lng: 107.0}, // Java
+                {lat: 0.0, lng: 100.0}, // Sumatra
+                {lat: 5.0, lng: 95.0}, // Northern Sumatra
+                {lat: 8.0, lng: 98.0}, // Thailand south
+                {lat: 14.0, lng: 100.0}, // Thailand central
+                {lat: 16.0, lng: 108.0}, // Vietnam central
+                {lat: 21.0, lng: 107.0}, // Vietnam north
+                {lat: 23.0, lng: 105.0}, // China south
+                {lat: 25.0, lng: 102.0}, // Myanmar east
+                {lat: 28.0, lng: 97.0}, // Myanmar north
+                
+                // Indian subcontinent
+                {lat: 28.0, lng: 88.0}, // Bangladesh
+                {lat: 22.0, lng: 88.0}, // Kolkata area
+                {lat: 18.0, lng: 83.0}, // India east coast
+                {lat: 13.0, lng: 80.0}, // Chennai area
+                {lat: 8.0, lng: 77.0}, // Kerala
+                {lat: 15.0, lng: 74.0}, // Goa area
+                {lat: 19.0, lng: 73.0}, // Mumbai area
+                {lat: 23.0, lng: 69.0}, // Gujarat
+                {lat: 25.0, lng: 67.0}, // Pakistan south
+                {lat: 28.0, lng: 67.0}, // Pakistan central
+                {lat: 32.0, lng: 72.0}, // Pakistan north
+                
+                // Central and Western Asia
+                {lat: 37.0, lng: 75.0}, // Afghanistan east
+                {lat: 40.0, lng: 68.0}, // Uzbekistan
+                {lat: 45.0, lng: 52.0}, // Kazakhstan
+                {lat: 47.0, lng: 40.0}, // Russia - Caucasus area
+                {lat: 43.0, lng: 40.0}, // Georgia
+                {lat: 40.0, lng: 45.0}, // Armenia area
+                {lat: 37.0, lng: 35.0}, // Turkey east
+                {lat: 36.0, lng: 30.0}, // Turkey south
+                {lat: 37.0, lng: 27.0}, // Turkey west
+                
+                // Middle East
+                {lat: 33.0, lng: 35.0}, // Lebanon/Syria
+                {lat: 29.0, lng: 48.0}, // Kuwait area
+                {lat: 24.0, lng: 52.0}, // UAE
+                {lat: 16.0, lng: 52.0}, // Oman
+                {lat: 13.0, lng: 44.0}, // Yemen
+                {lat: 18.0, lng: 42.0}, // Saudi Arabia west
+                {lat: 25.0, lng: 37.0}, // Saudi Arabia north
+                {lat: 30.0, lng: 48.0}, // Iraq south
+                {lat: 33.0, lng: 45.0}, // Iraq central
+                {lat: 37.0, lng: 45.0}, // Iraq north
+                
+                // Back to Siberia
+                {lat: 42.0, lng: 50.0}, // Caspian area
+                {lat: 50.0, lng: 58.0}, // Kazakhstan north
+                {lat: 55.0, lng: 75.0}, // Western Siberia
+                {lat: 60.0, lng: 90.0}, // Central Siberia
+                {lat: 65.0, lng: 100.0}, // Northern Siberia
+                {lat: 70.0, lng: 105.0}, // Arctic Siberia
+                {lat: 75.0, lng: 100.0}  // Back to start
+            ];
+            
+            // AUSTRALIA - Detailed coastline
+            const australia = [
+                // Northern coast
+                {lat: -11.0, lng: 131.0}, // Arnhem Land
+                {lat: -12.0, lng: 134.0}, // Northern Territory coast
+                {lat: -11.0, lng: 136.0}, // Gove Peninsula
+                {lat: -12.5, lng: 138.0}, // Gulf of Carpentaria west
+                {lat: -13.0, lng: 141.0}, // Gulf of Carpentaria east
+                {lat: -15.0, lng: 145.0}, // Cape York Peninsula
+                
+                // Eastern coast
+                {lat: -16.5, lng: 146.0}, // Cairns area
+                {lat: -20.0, lng: 148.0}, // Whitsundays
+                {lat: -23.0, lng: 150.0}, // Rockhampton
+                {lat: -26.5, lng: 153.0}, // Brisbane area
+                {lat: -28.0, lng: 153.5}, // Gold Coast
+                {lat: -31.5, lng: 152.0}, // New South Wales
+                {lat: -33.8, lng: 151.0}, // Sydney
+                {lat: -35.0, lng: 150.0}, // Canberra coast
+                {lat: -37.8, lng: 145.0}, // Melbourne
+                
+                // Southern coast
+                {lat: -38.5, lng: 142.0}, // Victoria
+                {lat: -40.8, lng: 144.0}, // King Island
+                {lat: -42.5, lng: 147.5}, // Tasmania east
+                {lat: -43.0, lng: 146.0}, // Tasmania south
+                {lat: -41.0, lng: 145.0}, // Tasmania west
+                {lat: -39.0, lng: 143.0}, // Back to Victoria
+                {lat: -35.0, lng: 138.0}, // Adelaide
+                
+                // Western coast
+                {lat: -32.0, lng: 115.8}, // Perth
+                {lat: -28.0, lng: 114.0}, // Geraldton
+                {lat: -25.0, lng: 113.0}, // Shark Bay
+                {lat: -22.0, lng: 114.0}, // Exmouth Gulf
+                {lat: -18.0, lng: 122.0}, // Broome
+                {lat: -14.5, lng: 126.0}, // Kimberley coast
+                {lat: -11.0, lng: 131.0}  // Closing the loop (Arnhem Land)
+            ];
 
-        //     sphereGroup = new THREE.Group();
-        //     scene.add(sphereGroup);
+            // NEW GUINEA
+            const newGuinea = [
+                {lat: -2.0, lng: 141.0}, // North coast west
+                {lat: -3.0, lng: 143.0},
+                {lat: -4.0, lng: 147.0}, // North coast east
+                {lat: -6.0, lng: 147.5}, // Southeast
+                {lat: -8.0, lng: 145.0}, // South coast east
+                {lat: -8.0, lng: 142.0}, // South coast west
+                {lat: -6.0, lng: 141.0}, // Closing loop
+            ];
 
-        //     camera.position.set(0, 0, 20);
-        //     camera.lookAt(0, 0, 0);
+            // NEW ZEALAND - North & South Islands
+            const newZealandNorth = [
+                {lat: -34.5, lng: 172.0}, // Northland
+                {lat: -37.0, lng: 175.0}, // Auckland
+                {lat: -38.0, lng: 178.0}, // East Cape
+                {lat: -39.0, lng: 176.0}, // Hawke’s Bay
+                {lat: -41.0, lng: 174.0}, // Wellington
+                {lat: -39.0, lng: 172.0}, // West coast
+                {lat: -34.5, lng: 172.0}  // Closing
+            ];
 
-        //     // Lighting
-        //     const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
-        //     scene.add(ambientLight);
+            const newZealandSouth = [
+                {lat: -41.0, lng: 174.0}, // North tip
+                {lat: -43.0, lng: 173.0}, // East coast
+                {lat: -45.0, lng: 170.0}, // Otago
+                {lat: -46.5, lng: 167.0}, // Southland
+                {lat: -44.0, lng: 167.0}, // Fiordland
+                {lat: -41.0, lng: 171.0}, // West coast north
+                {lat: -41.0, lng: 174.0}  // Closing
+            ];
 
-        //     const lights = [
-        //         { color: 0xff0080, pos: [10, 10, 5] },
-        //         { color: 0x00ff80, pos: [-10, -10, 5] },
-        //         { color: 0x0080ff, pos: [0, 10, -10] }
-        //     ];
-        //     lights.forEach(l => {
-        //         const d = new THREE.DirectionalLight(l.color, 1.0);
-        //         d.position.set(...l.pos);
-        //         scene.add(d);
-        //     });
+    
+            [
+                northAmerica,
+                southAmerica,
+                europe,
+                africa,
+                asia,
+                australia,
+                newGuinea,
+                newZealandNorth,
+                newZealandSouth
+            ].forEach(coords => drawContinent(coords));
 
-        //     createStarfield();
-        //     setupMouseControls();
-
-        //     // --- PLACEHOLDER: neon wireframe globe ---
-        //     const placeholderGeo = new THREE.SphereGeometry(6, 16, 16);
-        //     const placeholderMat = new THREE.MeshBasicMaterial({
-        //         color: 0x00ffff,
-        //         wireframe: true,
-        //         transparent: true,
-        //         opacity: 0.3
-        //     });
-        //     placeholderSphere = new THREE.Mesh(placeholderGeo, placeholderMat);
-        //     sphereGroup.add(placeholderSphere);
-
-        //     // Animate pulsing scale
-        //     let pulse = 0;
-        //     function animatePlaceholder() {
-        //         pulse += 0.05;
-        //         placeholderSphere.scale.setScalar(1 + Math.sin(pulse) * 0.05);
-        //     }
-
-        //     // --- LOAD REAL TEXTURE ---
-        //     const textureLoader = new THREE.TextureLoader();
-        //     textureLoader.load(
-        //         './img/continents.png',
-        //         (continentTexture) => {
-        //             // Texture loaded -> replace placeholder
-        //             sphereGroup.remove(placeholderSphere);
-
-        //             const continentGeometry = new THREE.SphereGeometry(6 - 0.1, 64, 64);
-        //             const continentMaterial = new THREE.MeshBasicMaterial({
-        //                 map: continentTexture,
-        //                 transparent: true,
-        //                 opacity: 0.8,
-        //                 side: THREE.DoubleSide
-        //             });
-        //             continentSphere = new THREE.Mesh(continentGeometry, continentMaterial);
-        //             sphereGroup.add(continentSphere);
-
-        //             const sphereGeometry = new THREE.SphereGeometry(6, 32, 32);
-        //             const sphereMaterial = new THREE.MeshBasicMaterial({
-        //                 color: 0x00ffff,
-        //                 wireframe: true,
-        //                 transparent: true,
-        //                 opacity: 0.15
-        //             });
-        //             const wireframeSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        //             sphereGroup.add(wireframeSphere);
-
-        //             createGlider();
-        //         }
-        //     );
-
-        //     function animate() {
-        //         requestAnimationFrame(animate);
-        //         sphereGroup.rotation.y += 0.002;
-
-        //         if (placeholderSphere) {
-        //             animatePlaceholder();
-        //         }
-
-        //         renderer.render(scene, camera);
-        //     }
-        //     animate();
-        // }
+            return new THREE.CanvasTexture(canvas);
+        }
 
         // --- Self-contained Game of Life Glider Function ---
         function createGlider() {
